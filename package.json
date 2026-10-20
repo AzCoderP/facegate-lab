@@ -1,0 +1,13 @@
+{
+  "name": "facegate-lab-ui",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Optional formatting tools for the Python application's static UI",
+  "scripts": {
+    "format": "prettier --write \"web/*.{html,css,js}\"",
+    "check": "prettier --check \"web/*.{html,css,js}\" && node --check web/app.js"
+  },
+  "devDependencies": {
+    "prettier": "3.6.2"
+  }
+}

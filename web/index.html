@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="az">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>FaceGate Lab | Giriş nəzarəti</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/style.css" />
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <symbol id="i-home" viewBox="0 0 24 24">
+        <path d="m3 10 9-7 9 7v10H15v-7H9v7H3z" />
+      </symbol>
+      <symbol id="i-camera" viewBox="0 0 24 24">
+        <rect x="3" y="6" width="18" height="15" rx="3" />
+        <path d="m8 6 2-3h4l2 3" />
+        <circle cx="12" cy="13" r="4" />
+      </symbol>
+      <symbol id="i-users" viewBox="0 0 24 24">
+        <circle cx="9" cy="8" r="4" />
+        <path
+          d="M2 21v-3a7 7 0 0 1 14 0v3M17 4a4 4 0 0 1 0 8m1 3a6 6 0 0 1 4 6"
+        />
+      </symbol>
+      <symbol id="i-logs" viewBox="0 0 24 24">
+        <ellipse cx="12" cy="5" rx="8" ry="3" />
+        <path d="M4 5v14c0 4 16 4 16 0V5M4 12c0 4 16 4 16 0" />
+      </symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24">
+        <path
+          d="m10 2 4 0 1 3 3 1 3 3-2 3 1 3-3 3-3-1-2 4-4-1-1-3-3-1-2-4 2-3-1-3 3-3 4 1z"
+        />
+        <circle cx="12" cy="12" r="3" />
+      </symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24">
+        <path d="m12 2 9 4v6c0 5-9 10-9 10S3 17 3 12V6zM8 12l3 3 5-6" />
+      </symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 6v6l4 2" />
+      </symbol>
+      <symbol id="i-face" viewBox="0 0 24 24">
+        <path d="M7 2H2v5m15-5h5v5M2 17v5h5m15-5v5h-5" />
+        <ellipse cx="12" cy="12" rx="5" ry="7" />
+        <path d="M9 10h1m4 0h1m-6 5q3 2 6 0" />
+      </symbol>
+      <symbol id="i-search" viewBox="0 0 24 24">
+        <circle cx="10" cy="10" r="7" />
+        <path d="m15 15 6 6" />
+      </symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24">
+        <path d="M3 12h17m-7-7 7 7-7 7" />
+      </symbol>
+      <symbol id="i-info" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 10v7m0-10v1" />
+      </symbol>
+    </svg>
+    <div id="app-shell" inert>
+      <aside class="sidebar">
+        <a class="brand" href="/" aria-label="FaceGate Lab başlanğıc"
+          ><span class="brand-mark">F<small>G</small></span
+          ><span>FaceGate <b>Lab</b></span></a
+        >
+        <nav aria-label="Əsas menyu">
+          <button
+            class="nav-item active"
+            data-view="dashboard"
+            aria-current="page"
+          >
+            <svg><use href="#i-home" /></svg>Ana səhifə</button
+          ><button class="nav-item" data-view="camera">
+            <svg><use href="#i-camera" /></svg>Kamera terminalı</button
+          ><button class="nav-item" data-view="users">
+            <svg><use href="#i-users" /></svg>İstifadəçilər</button
+          ><button class="nav-item" data-view="events">
+            <svg><use href="#i-logs" /></svg>Giriş qeydləri</button
+          ><button class="nav-item" data-view="settings">
+            <svg><use href="#i-settings" /></svg>Parametrlər
+          </button>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="sidebar-status">
+            <span class="dot" id="sidebar-dot"></span>
+            <div>
+              <strong id="sidebar-status">Əlaqə yoxlanılır</strong
+              ><small id="sidebar-detail">Lokal laboratoriya</small>
+            </div>
+          </div>
+          <p>
+            <svg><use href="#i-shield" /></svg>FaceGate Lab v0.2.0
+          </p>
+        </div>
+      </aside>
+      <div class="page">
+        <header class="topbar">
+          <form id="search-form" role="search">
+            <svg><use href="#i-search" /></svg
+            ><input
+              id="global-search"
+              aria-label="İstifadəçi adı və ya ID axtar"
+              placeholder="İstifadəçi adı və ya ID axtarın…"
+              maxlength="80"
+            /><button type="submit" class="text-button">Axtar</button>
+          </form>
+          <div class="top-actions">
+            <button
+              id="refresh"
+              class="icon-button"
+              aria-label="Vəziyyəti yenilə"
+            >
+              ↻</button
+            ><span class="admin-label"
+              ><svg><use href="#i-shield" /></svg>Admin</span
+            ><button id="logout" class="quiet small">Çıxış</button>
+          </div>
+        </header>
+        <main>
+          <div id="notice" class="notice" role="status" aria-live="polite">
+            İdarəetmə paneli hazırlanır…
+          </div>
+          <section id="view-dashboard" class="view">
+            <div class="dashboard-grid">
+              <div class="main-column">
+                <section class="hero">
+                  <div class="hero-copy">
+                    <h1>Üz tanıma ilə<br />giriş nəzarəti</h1>
+                    <p>
+                      Kimliyi doğrula. İcazəni yoxla.<br />Hər qərarın səbəbini
+                      gör.
+                    </p>
+                    <div class="hero-features">
+                      <span
+                        ><svg><use href="#i-face" /></svg>1:1 doğrulama<small
+                          >YuNet + SFace</small
+                        ></span
+                      ><span
+                        ><svg><use href="#i-shield" /></svg>Qorunan
+                        məlumat<small>Şifrəli üz nümunələri</small></span
+                      ><span
+                        ><svg><use href="#i-clock" /></svg>İcazə cədvəli<small
+                          >Bakı vaxtı ilə</small
+                        ></span
+                      >
+                    </div>
+                  </div>
+                  <img
+                    src="/static/terminal.svg"
+                    alt="Üz oxuyucusunun sxematik təsviri"
+                    class="hero-art"
+                  />
+                </section>
+                <section class="terminal panel" id="terminal">
+                  <div class="camera-toolbar">
+                    <div>
+                      <button id="camera-start" class="blue-button">
+                        <svg><use href="#i-camera" /></svg>Kameranı aç</button
+                      ><button id="camera-stop" class="text-button" disabled>
+                        Kameranı bağla
+                      </button>
+                    </div>
+                    <span class="camera-indicator"
+                      ><span class="dot" id="camera-dot"></span
+                      ><span id="camera-state">Kamera bağlıdır</span></span
+                    ><button
+                      id="fullscreen"
+                      class="icon-button"
+                      aria-label="Kamera görüntüsünü tam ekranda aç"
+                    >
+                      ⛶
+                    </button>
+                  </div>
+                  <div class="capture-layout">
+                    <div class="viewport" id="viewport">
+                      <video id="video" autoplay playsinline muted></video>
+                      <div id="camera-placeholder">
+                        <svg><use href="#i-face" /></svg
+                        ><strong>Canlı kamera üçün hazırdır</strong
+                        ><span>Başlamaq üçün kameranı aç.</span>
+                      </div>
+                      <div class="frame-corner corner-tl"></div>
+                      <div class="frame-corner corner-tr"></div>
+                      <div class="frame-corner corner-bl"></div>
+                      <div class="frame-corner corner-br"></div>
+                      <span class="camera-label"
+                        >CAM-01 <span>Lokal kamera</span></span
+                      ><span id="resolution" class="camera-resolution"
+                        >Görüntü gözlənilir</span
+                      >
+                    </div>
+                    <div
+                      id="result"
+                      class="result neutral"
+                      role="status"
+                      aria-live="polite"
+                    >
+                      <svg><use href="#i-face" /></svg
+                      ><strong>Gözləyir…</strong>
+                      <p>Üzünü kameraya yönəlt və doğrulamanı başlat.</p>
+                      <code id="result-code">READY</code>
+                    </div>
+                  </div>
+                  <div class="tabs" role="tablist" aria-label="Əməliyyat">
+                    <button
+                      id="tab-verify"
+                      role="tab"
+                      aria-selected="true"
+                      aria-controls="panel-verify"
+                      data-panel="verify"
+                    >
+                      <svg><use href="#i-face" /></svg>Doğrulama</button
+                    ><button
+                      id="tab-enroll"
+                      role="tab"
+                      aria-selected="false"
+                      aria-controls="panel-enroll"
+                      data-panel="enroll"
+                    >
+                      <svg><use href="#i-camera" /></svg>Qeydiyyat</button
+                    ><button
+                      id="tab-policy"
+                      role="tab"
+                      aria-selected="false"
+                      aria-controls="panel-policy"
+                      data-panel="policy"
+                    >
+                      <svg><use href="#i-settings" /></svg>Qayda sınağı
+                    </button>
+                  </div>
+                  <div
+                    id="panel-verify"
+                    class="operation"
+                    role="tabpanel"
+                    aria-labelledby="tab-verify"
+                  >
+                    <h2>Üz ilə doğrulama</h2>
+                    <p>
+                      Əvvəl ID-ni bildir. Üz yalnız həmin şəxsin nümunələri ilə
+                      müqayisə edilir.
+                    </p>
+                    <form id="verify-form">
+                      <div class="field-pair">
+                        <label
+                          >Tələbə ID-si<input
+                            name="user_id"
+                            placeholder="ST001"
+                            required
+                            maxlength="40"
+                            pattern="[A-Za-z0-9_-]+"
+                            autocomplete="off" /></label
+                        ><label
+                          >Giriş nöqtəsi<input
+                            name="door"
+                            value="Main-Gate"
+                            required
+                            maxlength="40"
+                            pattern="[A-Za-z0-9_-]+"
+                        /></label>
+                      </div>
+                      <button class="primary" type="submit">
+                        <svg><use href="#i-face" /></svg>Üzü doğrula və icazəni
+                        yoxla<svg><use href="#i-arrow" /></svg>
+                      </button>
+                    </form>
+                    <p class="hint">
+                      Oxşarlıq balı ehtimal faizi deyil. Fiziki qapı əməliyyatı
+                      aparılmır.
+                    </p>
+                  </div>
+                  <div
+                    id="panel-enroll"
+                    class="operation"
+                    role="tabpanel"
+                    aria-labelledby="tab-enroll"
+                    hidden
+                  >
+                    <h2>İstifadəçi qeydiyyatı</h2>
+                    <p>
+                      Üç fərqli kadr çək. Hər çəkilişdə üzünü azca dəyiş; tam
+                      profilə dönmə.
+                    </p>
+                    <form id="enroll-form">
+                      <div class="field-pair">
+                        <label
+                          >Tələbə ID-si<input
+                            name="id"
+                            placeholder="ST001"
+                            required
+                            maxlength="40"
+                            pattern="[A-Za-z0-9_-]+"
+                            autocomplete="off" /></label
+                        ><label
+                          >Ad və soyad<input
+                            name="name"
+                            placeholder="Ad Soyad"
+                            required
+                            maxlength="80"
+                            autocomplete="off"
+                        /></label>
+                      </div>
+                      <label
+                        >İcazəli giriş<input
+                          name="door"
+                          value="Main-Gate"
+                          required
+                          maxlength="40"
+                          pattern="[A-Za-z0-9_-]+"
+                      /></label>
+                      <div class="field-pair">
+                        <label
+                          >Başlanğıc vaxtı<input
+                            type="time"
+                            name="start_time"
+                            value="00:00"
+                            required /></label
+                        ><label
+                          >Son vaxt<input
+                            type="time"
+                            name="end_time"
+                            value="00:00"
+                            required
+                        /></label>
+                      </div>
+                      <p class="hint">
+                        Eyni başlanğıc və son vaxt bütün gün icazə deməkdir.
+                      </p>
+                      <label class="check"
+                        ><input type="checkbox" id="consent" required />Öz
+                        məlumatımı verirəm və ya iştirakçının razılığı
+                        var.</label
+                      >
+                      <div class="capture-row">
+                        <button type="button" id="capture" class="quiet">
+                          Nümunə çək
+                        </button>
+                        <div class="sample-indicators" aria-hidden="true">
+                          <i></i><i></i><i></i>
+                        </div>
+                        <span id="samples">0 / 3</span
+                        ><button
+                          type="button"
+                          id="clear-samples"
+                          class="text-button"
+                        >
+                          Sıfırla
+                        </button>
+                      </div>
+                      <button class="primary" type="submit">
+                        Qeydiyyatı tamamla
+                      </button>
+                    </form>
+                  </div>
+                  <div
+                    id="panel-policy"
+                    class="operation"
+                    role="tabpanel"
+                    aria-labelledby="tab-policy"
+                    hidden
+                  >
+                    <h2>İcazə qaydasını sına</h2>
+                    <p>
+                      Bu simulyasiyada üz yoxlanılmır və giriş hadisəsi
+                      yaradılmır.
+                    </p>
+                    <form id="policy-form">
+                      <div class="field-pair">
+                        <label
+                          >Tələbə ID-si<input
+                            name="user_id"
+                            placeholder="ST001"
+                            required
+                            maxlength="40"
+                            pattern="[A-Za-z0-9_-]+" /></label
+                        ><label
+                          >Yoxlanılan giriş<input
+                            name="door"
+                            value="Main-Gate"
+                            required
+                            maxlength="40"
+                            pattern="[A-Za-z0-9_-]+"
+                        /></label>
+                      </div>
+                      <label
+                        >Bakı vaxtı ilə sınaq anı<input
+                          type="datetime-local"
+                          name="at"
+                          required /></label
+                      ><button class="primary" type="submit">
+                        Qaydanın nəticəsini göstər
+                      </button>
+                    </form>
+                    <p id="policy-result" class="hint" aria-live="polite"></p>
+                  </div>
+                </section>
+                <div class="lab-note">
+                  <svg><use href="#i-info" /></svg>
+                  <p>
+                    <strong>Tədris prototipi.</strong> Foto və ekranla aldatmaya
+                    qarşı PAD müdafiəsi yoxdur. Həqiqi təhlükəsizlik sistemi
+                    kimi istifadə etmə.
+                  </p>
+                </div>
+              </div>
+              <aside class="right-column">
+                <section class="panel status-panel">
+                  <div class="panel-heading">
+                    <h2>Sistem vəziyyəti</h2>
+                    <span id="system-badge" class="badge">Yoxlanılır</span>
+                  </div>
+                  <dl>
+                    <div>
+                      <dt>
+                        <svg><use href="#i-logs" /></svg>API və baza
+                      </dt>
+                      <dd id="health">—</dd>
+                    </div>
+                    <div>
+                      <dt>
+                        <svg><use href="#i-face" /></svg>Üz modelləri
+                      </dt>
+                      <dd id="models">—</dd>
+                    </div>
+                    <div>
+                      <dt>
+                        <svg><use href="#i-clock" /></svg>Saat qurşağı
+                      </dt>
+                      <dd>Bakı / UTC+04:00</dd>
+                    </div>
+                    <div>
+                      <dt>
+                        <svg><use href="#i-settings" /></svg>Uyğunluq həddi
+                      </dt>
+                      <dd id="threshold">—</dd>
+                    </div>
+                  </dl>
+                  <small class="model-note"
+                    >Model statusu fayl mövcudluğudur; dəqiqlik ölçməsi
+                    deyil.</small
+                  >
+                </section>
+                <section class="panel recent-panel">
+                  <div class="panel-heading">
+                    <h2>
+                      <svg><use href="#i-clock" /></svg>Son girişlər
+                    </h2>
+                    <button class="text-button" data-view="events">
+                      Hamısına bax
+                    </button>
+                  </div>
+                  <div id="recent-events" class="recent-list">
+                    <p class="empty">Hələ giriş cəhdi yoxdur.</p>
+                  </div>
+                </section>
+                <section class="panel summary-panel">
+                  <div class="panel-heading">
+                    <h2>
+                      <svg><use href="#i-info" /></svg>Qısa məlumat
+                    </h2>
+                  </div>
+                  <dl>
+                    <div>
+                      <dt>Qeydiyyatlı istifadəçi</dt>
+                      <dd id="stat-users">—</dd>
+                    </div>
+                    <div>
+                      <dt>Aktiv istifadəçi</dt>
+                      <dd id="stat-active">—</dd>
+                    </div>
+                    <div>
+                      <dt>Giriş cəhdi</dt>
+                      <dd id="stat-events">—</dd>
+                    </div>
+                    <div>
+                      <dt>İcazə / rədd</dt>
+                      <dd id="stat-decisions">—</dd>
+                    </div>
+                    <div>
+                      <dt>Son sinxronlaşma</dt>
+                      <dd id="last-sync">—</dd>
+                    </div>
+                  </dl>
+                  <p class="tip">
+                    Daha sabit nəticə üçün işıqlandırmanı və kameranın bucağını
+                    yoxla.
+                  </p>
+                </section>
+              </aside>
+            </div>
+          </section>
+          <section id="view-users" class="view" hidden>
+            <div class="view-heading">
+              <div>
+                <p class="eyebrow">Qeydiyyat və icazələr</p>
+                <h1>İstifadəçilər</h1>
+              </div>
+              <button id="new-user" class="blue-button">Yeni qeydiyyat</button>
+            </div>
+            <div class="panel">
+              <div class="panel-heading">
+                <h2 id="user-count">İstifadəçi siyahısı</h2>
+                <button id="clear-search" class="text-button">
+                  Axtarışı təmizlə
+                </button>
+              </div>
+              <div class="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>İstifadəçi</th>
+                      <th>İcazəli giriş</th>
+                      <th>Bakı vaxtı ilə icazə</th>
+                      <th>Status</th>
+                      <th>Əməliyyat</th>
+                    </tr>
+                  </thead>
+                  <tbody id="users"></tbody>
+                </table>
+              </div>
+              <div class="pagination">
+                <button id="users-prev" class="quiet small">Əvvəlki</button
+                ><span id="users-page">1-ci səhifə</span
+                ><button id="users-next" class="quiet small">Sonrakı</button>
+              </div>
+            </div>
+          </section>
+          <section id="view-events" class="view" hidden>
+            <div class="view-heading">
+              <div>
+                <p class="eyebrow">Qərarın səbəbini araşdır</p>
+                <h1>Giriş qeydləri</h1>
+              </div>
+              <button id="export-events" class="quiet">
+                Görünən qeydləri JSON endir
+              </button>
+            </div>
+            <div class="panel">
+              <form id="event-filter" class="filter-bar">
+                <label
+                  >Tələbə ID-si<input
+                    name="user_id"
+                    placeholder="Bütün istifadəçilər"
+                    maxlength="40"
+                    pattern="[A-Za-z0-9_-]*" /></label
+                ><label
+                  >Qərar<select name="decision">
+                    <option value="">Bütün qərarlar</option>
+                    <option value="GRANTED">İcazə verildi</option>
+                    <option value="DENIED">Rədd edildi</option>
+                  </select></label
+                ><button class="blue-button" type="submit">Filtrlə</button>
+              </form>
+              <div class="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Bakı vaxtı</th>
+                      <th>ID / Giriş</th>
+                      <th>Qərar</th>
+                      <th>Səbəb</th>
+                      <th>Oxşarlıq</th>
+                      <th>Müddət</th>
+                    </tr>
+                  </thead>
+                  <tbody id="events"></tbody>
+                </table>
+              </div>
+              <div class="pagination">
+                <button id="events-prev" class="quiet small">Əvvəlki</button
+                ><span id="events-page">1-ci səhifə</span
+                ><button id="events-next" class="quiet small">Sonrakı</button>
+              </div>
+            </div>
+          </section>
+          <section id="view-settings" class="view" hidden>
+            <div class="view-heading">
+              <div>
+                <p class="eyebrow">Lokal sistem</p>
+                <h1>Parametrlər və diaqnostika</h1>
+              </div>
+            </div>
+            <div class="settings-grid">
+              <section class="panel padded">
+                <h2>Üz uyğunluğu həddi</h2>
+                <p>
+                  Həddi artırmaq yanlış uyğunluqları azalda, həqiqi şəxslərin
+                  rəddini artıra bilər. Seçimi ayrı test nümunələri ilə ölç.
+                </p>
+                <form id="settings-form">
+                  <label
+                    >Cosine similarity həddi<input
+                      name="threshold"
+                      type="number"
+                      min="0.001"
+                      max="1"
+                      step="0.001"
+                      value="0.363"
+                      required /></label
+                  ><button class="blue-button" type="submit">
+                    Həddi saxla
+                  </button>
+                </form>
+                <p class="hint">
+                  Bu ayar bütün gələcək qeydiyyat və doğrulamalara təsir edir.
+                </p>
+              </section>
+              <section class="panel padded">
+                <h2>Məlumat və giriş qorunması</h2>
+                <ul class="security-list">
+                  <li>Şifrəli biometrik nümunələr</li>
+                  <li>Müddətli administrator sessiyası</li>
+                  <li>CSRF və eyni origin yoxlaması</li>
+                  <li>Sorğu ölçüsü və sürət limitləri</li>
+                  <li>İdarəetmə əməliyyatları jurnalı</li>
+                </ul>
+                <p class="hint">
+                  Yalnız localhost. Açarlar eyni kompüterdə saxlanır; kompüterə
+                  tam girişdən müdafiə deyil.
+                </p>
+              </section>
+            </div>
+            <section class="panel padded diagnostics">
+              <h2>Problem həlli ardıcıllığı</h2>
+              <div class="guide-grid">
+                <p>
+                  <strong>Kamera açılmır?</strong>Windows və brauzer kamera
+                  icazəsini yoxla. Kameranı tutan başqa tətbiqi bağla.
+                </p>
+                <p>
+                  <strong>Serverə əlaqə yoxdur?</strong>Proses → dinlənilən port
+                  → firewall → IP/VLAN → marşrut ardıcıllığı ilə araşdır.
+                </p>
+                <p>
+                  <strong>Üz uyğun gəlir, giriş yoxdur?</strong>Hesabın
+                  aktivliyini, giriş nöqtəsini və Bakı vaxtı ilə cədvəli yoxla.
+                </p>
+                <p>
+                  <strong>Model və ya baza xətası?</strong>Server terminalını və
+                  scripts/diagnose.py nəticəsini yoxla. Xətanı həddi azaltmaqla
+                  gizlətmə.
+                </p>
+              </div>
+            </section>
+            <section class="panel">
+              <div class="panel-heading">
+                <h2>Son idarəetmə əməliyyatları</h2>
+              </div>
+              <div class="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Bakı vaxtı</th>
+                      <th>Əməliyyat</th>
+                      <th>Psevdonim identifikator</th>
+                    </tr>
+                  </thead>
+                  <tbody id="audit"></tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+        </main>
+        <footer>
+          <span>FaceGate Lab · Lokal laboratoriya</span
+          ><span
+            >Xam kadrlar saxlanmır. Dəqiqlik ölçməsini öz testlərinlə
+            apar.</span
+          >
+        </footer>
+      </div>
+    </div>
+    <section
+      id="auth-gate"
+      class="auth-gate"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="auth-title"
+    >
+      <div class="auth-card">
+        <span class="brand-mark">F<small>G</small></span>
+        <p class="eyebrow">FaceGate Lab</p>
+        <h1 id="auth-title">İdarəetməyə giriş</h1>
+        <p>
+          Lokal administrator açarı ilə paneli aç. Açar brauzerin yaddaşında
+          saxlanmır.
+        </p>
+        <form id="login-form">
+          <label
+            >Administrator açarı<input
+              id="admin-key"
+              name="key"
+              type="password"
+              maxlength="128"
+              required
+              autocomplete="off"
+              spellcheck="false" /></label
+          ><button class="primary" type="submit">
+            Təhlükəsiz sessiyanı aç
+          </button>
+        </form>
+        <p id="login-error" role="alert"></p>
+        <details>
+          <summary>Açarı haradan götürüm?</summary>
+          <p>
+            start.cmd açarında göstərilir. Layihə terminalında bu əmri də işlədə
+            bilərsən:
+          </p>
+          <code>.venv\Scripts\python.exe scripts\admin_key.py</code>
+          <p>Açarı paylaşma və GitHub-a yükləmə.</p>
+        </details>
+      </div>
+    </section>
+    <dialog id="edit-dialog">
+      <form id="edit-form">
+        <h2>Giriş icazəsini dəyiş</h2>
+        <input type="hidden" name="id" /><label
+          >İcazəli giriş<input
+            name="door"
+            required
+            maxlength="40"
+            pattern="[A-Za-z0-9_-]+"
+        /></label>
+        <div class="field-pair">
+          <label
+            >Başlanğıc<input name="start_time" type="time" required /></label
+          ><label>Son<input name="end_time" type="time" required /></label>
+        </div>
+        <label class="check"
+          ><input type="checkbox" name="active" />Hesab aktivdir</label
+        >
+        <div class="capture-row">
+          <button class="blue-button" type="submit">Saxla</button
+          ><button class="quiet" id="edit-cancel" type="button">Ləğv et</button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>
