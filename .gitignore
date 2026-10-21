@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+data/
+models/*.onnx
+models/*.part
+*.log
+.env
+*.zip
+*.key
+.ruff_cache/
+.coverage
+htmlcov/
+artifacts/
+node_modules/
