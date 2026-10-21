@@ -16,6 +16,7 @@ Use GitHub's private vulnerability reporting if enabled for the repository. Othe
 - HMAC request fingerprints and audit subject pseudonyms.
 - Serialized mutations, unique event IDs, explicit replay responses, no success on DB write failure.
 - Strict CSP, framing restrictions, safe DOM text rendering, microphone/geolocation disabled.
+- Optional gesture lab uses same-origin MediaPipe assets in a worker; CSP permits WASM compilation (`wasm-unsafe-eval`), without JavaScript `unsafe-eval` or external runtime script origins. Hand frames/landmarks remain in browser memory. Gesture rules never authorize entry. See `docs/gesture-lab.az.md`.
 
 ## Trust boundary and residual risk
 

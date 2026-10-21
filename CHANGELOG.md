@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased — gesture laboratory
+
+- Speed-adaptive drawing filter, discontinuity protection, quadratic strokes and conservative mathematical line/circle/rotated rectangle fitting.
+- Local COCO-SSD object detection in a CPU worker and an explicit non-neural background/silhouette analysis mode. Pen and notebook are not separate pretrained model classes.
+
+- Separate camera hand tracking with locally installed, checksum-pinned MediaPipe assets and a Web Worker; camera-free real-model smoke check.
+- Air drawing, eraser, bounded undo, PNG export and mouse/touch fallback.
+- Gesture keypad and arithmetic parser without eval; native Canvas perspective cube, sphere and pyramid rotation.
+- Camera cleanup on view changes, logout, backgrounding and errors; no hand images/landmarks sent to the backend or persisted.
+- Optional local asset installer, setup integration and JavaScript logic tests. Handwriting OCR, equation solving and automatic drawing-to-3D conversion are not included.
+
 ## 0.2.0 — 2026-10-21
 
 - Dark blue operator console based on the provided visual reference; functional navigation, search, filters, pagination, JSON export and settings.

@@ -8,6 +8,7 @@
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/static/style.css" />
     <script src="/static/app.js" defer></script>
+    <script type="module" src="/static/gestures.js"></script>
   </head>
   <body>
     <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -78,6 +79,8 @@
             <svg><use href="#i-users" /></svg>İstifadəçilər</button
           ><button class="nav-item" data-view="events">
             <svg><use href="#i-logs" /></svg>Giriş qeydləri</button
+          ><button class="nav-item" data-view="gestures">
+            <svg><use href="#i-face" /></svg>Jest laboratoriyası</button
           ><button class="nav-item" data-view="settings">
             <svg><use href="#i-settings" /></svg>Parametrlər
           </button>
@@ -485,6 +488,206 @@
                   <p class="tip">
                     Daha sabit nəticə üçün işıqlandırmanı və kameranın bucağını
                     yoxla.
+                  </p>
+                </section>
+              </aside>
+            </div>
+          </section>
+          <section id="view-gestures" class="view" hidden>
+            <div class="view-heading">
+              <div>
+                <h1>Əlinlə yarat</h1>
+                <p>Havada rəsm çək, hesabla və 3D fiquru idarə et.</p>
+              </div>
+            </div>
+            <div class="gesture-layout">
+              <section class="panel padded gesture-workspace">
+                <div class="gesture-toolbar">
+                  <label
+                    >İş rejimi<select id="gesture-mode">
+                      <option value="draw">Rəsm lövhəsi</option>
+                      <option value="math">Riyaziyyat</option>
+                      <option value="shape">3D fiqurlar</option>
+                      <option value="objects">Real əşya analizi</option>
+                    </select></label
+                  >
+                  <label
+                    >Rəng<input type="color" id="gesture-color" value="#5cbaff"
+                  /></label>
+                  <label
+                    >Qələm<input
+                      type="range"
+                      id="gesture-width"
+                      min="2"
+                      max="24"
+                      value="5"
+                  /></label>
+                </div>
+                <div id="gesture-drawing-tools" class="gesture-toolbar">
+                  <label
+                    >Xətti düzəlt<select id="gesture-snap">
+                      <option value="auto">Avtomatik fiqur</option>
+                      <option value="free">Sərbəst rəsm</option>
+                      <option value="line">Düz xətt</option>
+                      <option value="circle">Dairə</option>
+                      <option value="rectangle">Düzbucaqlı</option>
+                    </select></label
+                  >
+                  <label
+                    >Sabitləşdirmə<select id="gesture-smoothing">
+                      <option value="1">Balanslı</option>
+                      <option value="1.8">Güclü</option>
+                      <option value="0.6">Sürətli</option>
+                    </select></label
+                  >
+                </div>
+                <p id="gesture-fit" role="status">
+                  Xətti çək və pinch-i burax. Aydın fiqur riyazi olaraq
+                  düzəldiləcək.
+                </p>
+                <div id="gesture-object-tools" hidden>
+                  <label
+                    >Analiz üsulu<select id="gesture-detector">
+                      <option value="ai">Neyron şəbəkə — COCO-SSD</option>
+                      <option value="geometry">
+                        Modelsiz — fon fərqi və forma
+                      </option>
+                    </select></label
+                  >
+                  <p>
+                    Model kitab, telefon, fincan kimi COCO siniflərini tanıyır.
+                    Qələm və dəftər ayrıca sinif deyil; kitab nəticəsi dəftərlə
+                    qarışa bilər.
+                  </p>
+                  <button id="gesture-background" type="button">
+                    Boş fonu yadda saxla
+                  </button>
+                  <p class="muted">
+                    Modelsiz rejim: əvvəl boş, sabit fonu çək, sonra əşyanı
+                    göstər. Yalnız siluet forması ölçülür; kitab/qələm adı
+                    təsdiqlənmir. Kamera tərpənsə fonu yenilə.
+                  </p>
+                  <ul id="gesture-detections" aria-live="polite">
+                    <li>Kamera açıldıqdan sonra nəticə görünəcək.</li>
+                  </ul>
+                </div>
+                <div class="gesture-board-wrap">
+                  <canvas
+                    id="gesture-board"
+                    width="960"
+                    height="600"
+                    tabindex="0"
+                    aria-label="Rəsm və 3D lövhəsi. Siçan və toxunuşla da idarə olunur."
+                  ></canvas
+                  ><span id="gesture-cursor" hidden></span>
+                </div>
+                <div class="gesture-toolbar">
+                  <button id="gesture-undo" type="button">Geri al</button
+                  ><button id="gesture-clear" type="button">
+                    Lövhəni təmizlə</button
+                  ><button id="gesture-save" type="button">PNG endir</button>
+                </div>
+                <div id="gesture-math" hidden>
+                  <form id="gesture-math-form" class="gesture-toolbar">
+                    <label
+                      >Riyazi ifadə<input
+                        id="gesture-expression"
+                        maxlength="160"
+                        placeholder="(12 + 8) * 3 / 2"
+                        autocomplete="off" /></label
+                    ><button type="submit" class="primary">Hesabla</button>
+                  </form>
+                  <output id="gesture-answer" aria-live="polite"
+                    >İfadə yaz və ya aşağıdakı düymələrdən istifadə et.</output
+                  >
+                  <div
+                    id="gesture-keypad"
+                    aria-label="Jestlə idarə olunan kalkulyator"
+                  ></div>
+                  <p class="muted">
+                    Kursoru düyməyə yönəlt, baş və şəhadət barmağını birləşdir.
+                    + − × ÷, mötərizə, qüvvət (^) və sqrt() dəstəklənir. Əl
+                    yazısı avtomatik oxunmur.
+                  </p>
+                </div>
+                <div id="gesture-shape" class="gesture-toolbar" hidden>
+                  <label
+                    >Fiqur<select id="gesture-object">
+                      <option value="cube">Kub</option>
+                      <option value="pyramid">Piramida</option>
+                      <option value="sphere">Kürə</option>
+                    </select></label
+                  ><label
+                    >Ölçü<input
+                      id="gesture-scale"
+                      type="range"
+                      min="60"
+                      max="220"
+                      value="130" /></label
+                  ><button id="gesture-reset" type="button">
+                    Bucağı sıfırla
+                  </button>
+                </div>
+                <p class="muted">
+                  Siçan/toxunuş: çək, kalkulyator düyməsini seç və ya fiquru
+                  döndər. Rəsmin rejimlər arasında saxlanır.
+                </p>
+              </section>
+              <aside class="gesture-aside">
+                <section class="panel padded">
+                  <h2>Kamera analizi</h2>
+                  <button id="gesture-smoke" type="button">
+                    Modeli kamerasız yoxla
+                  </button>
+                  <div class="gesture-camera">
+                    <video id="gesture-video" autoplay muted playsinline></video
+                    ><canvas
+                      id="gesture-landmarks"
+                      width="480"
+                      height="360"
+                    ></canvas>
+                  </div>
+                  <div class="gesture-toolbar">
+                    <button id="gesture-start" class="primary" type="button">
+                      Əl kamerasını aç</button
+                    ><button id="gesture-stop" type="button" disabled>
+                      Bağla
+                    </button>
+                  </div>
+                  <p id="gesture-status" role="status" aria-live="polite">
+                    Kamera bağlıdır. Lövhə siçanla işləyir.
+                  </p>
+                  <strong id="gesture-name">Əl gözlənilir</strong>
+                  <p class="muted">
+                    Kameranı əlinə və ya əşyaya yönəlt. Üz göstərmək lazım
+                    deyil. Görüntü bu brauzerdə emal olunur; bu bölmə kadrları
+                    bazaya yazmır və serverə göndərmir.
+                  </p>
+                </section>
+                <section class="panel padded" id="gesture-guide-panel">
+                  <h2>Jest bələdçisi</h2>
+                  <dl class="gesture-guide">
+                    <dt>Şəhadət barmağı</dt>
+                    <dd>Kursoru hərəkət etdirir.</dd>
+                    <dt>Baş + şəhadət pinch</dt>
+                    <dd>
+                      Rəsm çəkir, kalkulyator düyməsini seçir və ya fiquru
+                      döndərir.
+                    </dd>
+                    <dt>İki barmaq</dt>
+                    <dd>Rəsm rejimində silgi.</dd>
+                    <dt>Açıq ovuc</dt>
+                    <dd>Qələmi qaldırır, əməliyyatı dayandırır.</dd>
+                    <dt>Yumruq</dt>
+                    <dd>
+                      Bir saniyə saxla: son xətti geri al. Yenidən etmək üçün
+                      əlini aç.
+                    </dd>
+                  </dl>
+                  <p class="muted">
+                    Bir əl göstər, barmaqları kameraya tərəf tut. Jestlər
+                    nöqtələrdən hesablanan təxmini qaydalardır; giriş icazəsini
+                    idarə etmir.
                   </p>
                 </section>
               </aside>

@@ -85,6 +85,7 @@ function lockPanel(message = "") {
   csrf = null;
   generation++;
   stopCamera();
+  window.dispatchEvent(new Event("facegate-lock"));
   clearPending();
   users = [];
   events = [];
@@ -167,6 +168,8 @@ function empty(target, cols, text) {
   target.replaceChildren(tr);
 }
 function view(name) {
+  window.dispatchEvent(new CustomEvent("facegate-view", { detail: name }));
+  if (name === "gestures") stopCamera();
   const selected = name === "camera" ? "dashboard" : name;
   document
     .querySelectorAll(".view")
@@ -383,9 +386,9 @@ function renderAudit(records) {
 async function run(task) {
   if (busy) return;
   busy = true;
-  const controls = [
-    ...document.querySelectorAll("button:not(#camera-stop)"),
-  ].map((button) => [button, button.disabled]);
+  const controls = [...document.querySelectorAll("button:not(#camera-stop)")]
+    .filter((button) => !button.closest("#view-gestures"))
+    .map((button) => [button, button.disabled]);
   controls.forEach(([button]) => (button.disabled = true));
   try {
     await task();
@@ -446,6 +449,7 @@ function cameraStatus(open) {
 $("#camera-start").onclick = () =>
   run(async () => {
     if (stream) return;
+    window.dispatchEvent(new Event("facegate-face-camera"));
     if (!navigator.mediaDevices?.getUserMedia)
       throw new Error("Kamera API-si yoxdur. Səhifəni localhost ünvanında aç.");
     let acquired;

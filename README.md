@@ -21,6 +21,8 @@
 
 ## Başlat — Windows
 
+[Lokal başlatma əmrləri və Cloudflare variantları](docs/local-and-cloudflare.az.md).
+
 Bu kompüterdə virtual mühit və modellər hazırlanıb. **`start.cmd` faylını aç**, terminalda göstərilən lokal administrator açarını götür və [http://127.0.0.1:8000](http://127.0.0.1:8000) səhifəsində daxil ol. İşlək server varsa ikinci nüsxəni açma. Dayandırmaq: terminalda `Ctrl+C`.
 
 Yeni kompüter üçün Python **3.12 və ya 3.13**, kamera və ilk quraşdırma üçün internet lazımdır. Layihə qovluğunda:
@@ -91,6 +93,15 @@ API və təhlükəsizlik sınaqları saxta üz mühərriki ilə izolyasiya edili
 GitHub Actions-də Python 3.12/3.13 testləri, lint/format və OSV dependency audit konfiqurasiyası var. Workflow-ların remote nəticəsi repo yüklənib işlədikdən sonra təsdiqlənə bilər.
 
 ## Öyrənmə materialları
+
+- [Sabitləşdirilmiş rəsm, riyazi fiqur düzəltmə və real əşya analizi](docs/drawing-and-objects.az.md).
+  Obyekt modelini quraşdırmaq üçün `.\.venv\Scripts\python.exe scripts\download_objects.py`.
+
+- **Yeni: Jest laboratoriyası.** Kamerada əl nöqtələri, pinch ilə rəsm və seçim,
+  jestlə kalkulyator, döndərilən kub/kürə/piramida. Kamera görüntüsü brauzerdə
+  emal olunur; əl yazısı OCR və tənlik həlli yoxdur. Mövcud quraşdırmada əvvəl
+  `.\.venv\Scripts\python.exe scripts\download_gestures.py` işə sal.
+  [Quraşdırma, jestlər və məhdudiyyətlər](docs/gesture-lab.az.md).
 
 - [Nəzəri və praktik plan](docs/learning-plan.az.md)
 - [Nasazlıq laboratoriyası](docs/troubleshooting.az.md)

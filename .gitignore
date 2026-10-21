@@ -14,3 +14,5 @@ models/*.part
 htmlcov/
 artifacts/
 node_modules/
+web/gesture-assets/
+web/object-assets/

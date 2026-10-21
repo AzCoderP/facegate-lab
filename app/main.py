@@ -96,7 +96,7 @@ def secure_headers(response):
             "Referrer-Policy": "no-referrer",
             "X-Frame-Options": "DENY",
             "Permissions-Policy": "camera=(self), microphone=(), geolocation=()",
-            "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'",
+            "Content-Security-Policy": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'",
         }
     )
     return response
