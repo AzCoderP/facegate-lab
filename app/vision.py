@@ -46,6 +46,47 @@ class FaceEngine:
             except cv2.error as exc:
                 raise VisionError("MODEL_LOAD_FAILED") from exc
 
+    def presence(self, encoded: str):
+        """Detect anonymous face boxes; never compute or compare identity features."""
+        from app.jpeg import dimensions
+
+        try:
+            raw = base64.b64decode(encoded.split(",", 1)[-1], validate=True)
+        except (ValueError, binascii.Error) as exc:
+            raise VisionError("INVALID_IMAGE") from exc
+        if len(raw) < 4 or raw[:2] != b"\xff\xd8":
+            raise VisionError("INVALID_IMAGE")
+        width, height = dimensions(raw)
+        if not (0 < width <= 960 and 0 < height <= 720):
+            raise VisionError("IMAGE_DIMENSIONS")
+        with self.lock:
+            try:
+                image = cv2.imdecode(np.frombuffer(raw, np.uint8), cv2.IMREAD_COLOR)
+                if image is None:
+                    raise VisionError("INVALID_IMAGE")
+                # Use only the detector, independently of enrollment/recognition.
+                detector = getattr(self, "presence_detector", None)
+                if detector is None:
+                    model = self.model_dir / "yunet.onnx"
+                    if not model.is_file():
+                        raise VisionError("MODELS_MISSING")
+                    detector = cv2.FaceDetectorYN.create(str(model), "", (width, height), 0.8)
+                    self.presence_detector = detector
+                detector.setInputSize((width, height))
+                _, faces = detector.detect(image)
+                boxes = []
+                for face in [] if faces is None else faces:
+                    x, y, w, h = map(float, face[:4])
+                    x1, y1 = max(0, x), max(0, y)
+                    x2, y2 = min(width, x + w), min(height, y + h)
+                    if x2 > x1 and y2 > y1:
+                        boxes.append(
+                            [x1 / width, y1 / height, (x2 - x1) / width, (y2 - y1) / height]
+                        )
+                return boxes
+            except cv2.error as exc:
+                raise VisionError("VISION_ERROR") from exc
+
     def embedding(self, encoded: str):
         if len(encoded) > 2_000_000:
             raise VisionError("IMAGE_TOO_LARGE")

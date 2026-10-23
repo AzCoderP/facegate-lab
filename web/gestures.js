@@ -1,6 +1,32 @@
+let tele = null;
+async function ensureTele() {
+  if (tele?.dead) tele = null;
+  if (tele || mode() !== "tele") return;
+  try {
+    const { Telekinesis } = await import("/static/telekinesis.mjs");
+    if (mode() !== "tele" || tele) return;
+    tele = new Telekinesis(overlay.parentElement, (text) => {
+      $("#tele-status").textContent = text;
+    });
+  } catch (error) {
+    $("#tele-status").textContent =
+      "3D açıla bilmədi. WebGL 2 dəstəyini yoxla.";
+    console.error(error);
+  }
+}
+import { DualHands } from "/static/dual-hand-core.mjs";
+import { paintEffects } from "/static/hand-effects.mjs";
+const dualHands = new DualHands();
+let effectState = null;
+import { fingerCount, LetterGate } from "/static/finger-letters.mjs";
+const letterGate = new LetterGate();
+import { StrokeStore, paintPath } from "/static/airboard-core.mjs";
 import { classifyHand, calculate, geometry } from "/static/gesture-core.mjs";
 import { PointerFilter, fitStroke } from "/static/drawing-core.mjs";
 const pointerFilter = new PointerFilter();
+const vectors = new StrokeStore();
+let measuredFrames = 0,
+  measuredSince = performance.now();
 let pendingStroke = null,
   drawPinchAt = null;
 let backgroundNext = false,
@@ -16,6 +42,12 @@ const pen = ink.getContext("2d");
 const video = $("#gesture-video"),
   overlay = $("#gesture-landmarks"),
   marks = overlay.getContext("2d");
+const effects = document.createElement("canvas");
+effects.width = 960;
+effects.height = 720;
+effects.id = "hand-effects";
+overlay.parentElement.append(effects);
+const effectsCtx = effects.getContext("2d");
 let camera,
   worker,
   loading = false,
@@ -33,15 +65,14 @@ let previous = null,
   fistAt = null,
   fistUsed = false,
   pointerId = null;
-let history = [],
-  rotation = { x: -0.35, y: 0.5 };
+let rotation = { x: -0.35, y: 0.5 };
 const names = {
   none: "Əl görünmür",
   pinch: "Pinch — seçim / çək / döndər",
   index: "Şəhadət — kursor",
-  two: "İki barmaq — silgi",
+  two: "İki barmaq — naviqasiya / qələm qaldırılıb",
   palm: "Açıq ovuc — fasilə",
-  fist: "Yumruq — geri al",
+  fist: "Yumruq — silgini seç",
   other: "Jesti aydın göstər",
 };
 const mode = () => $("#gesture-mode").value;
@@ -52,18 +83,24 @@ const installHint = () =>
 const status = (message) => {
   $("#gesture-status").textContent = message;
 };
-function snapshot() {
-  if (history.length >= 16) history.shift();
-  history.push(pen.getImageData(0, 0, ink.width, ink.height));
+function rebuildInk() {
+  pen.clearRect(0, 0, ink.width, ink.height);
+  for (const path of vectors.paths) paintPath(pen, path);
+  if (pendingStroke) paintPath(pen, pendingStroke);
+  $("#gesture-undo").disabled = !vectors.past.length && !pendingStroke;
+  $("#gesture-redo").disabled = !vectors.future.length;
 }
 function undo() {
   resetAction();
-  const image = history.pop();
-  if (image) {
-    pen.putImageData(image, 0, 0);
-    $("#gesture-fit").textContent = "Son əməliyyat geri alındı.";
-    render();
-  }
+  vectors.undo();
+  rebuildInk();
+  render();
+}
+function redo() {
+  resetAction();
+  vectors.redo();
+  rebuildInk();
+  render();
 }
 function render() {
   if (mode() === "objects") {
@@ -138,81 +175,51 @@ function resetAction() {
 function finishStroke() {
   const current = pendingStroke;
   pendingStroke = null;
-  if (!current || current.tool === "free") return;
-  const fitted = fitStroke(current.points, current.tool);
-  if (fitted.type === "free") {
-    $("#gesture-fit").textContent = fitted.reason;
-    return;
+  if (!current) return;
+  if (!current.erase && current.tool !== "free") {
+    const fitted = fitStroke(current.points, current.tool);
+    if (fitted.type === "circle")
+      current.circle = { ...fitted.center, radius: fitted.radius };
+    else if (fitted.type !== "free") {
+      current.points = fitted.points;
+      current.closed = fitted.type === "rectangle";
+      current.smooth = false;
+    }
+    $("#gesture-fit").textContent =
+      fitted.type === "free"
+        ? "Sərbəst xətt saxlanıldı."
+        : "Həndəsi fiqur düzəldildi.";
   }
-  const before = history.at(-1);
-  if (!before) return;
-  pen.putImageData(before, 0, 0);
-  pen.globalCompositeOperation = "source-over";
-  pen.strokeStyle = current.color;
-  pen.lineWidth = current.width;
-  pen.lineCap = "round";
-  pen.lineJoin = "round";
-  pen.beginPath();
-  if (fitted.type === "circle")
-    pen.arc(fitted.center.x, fitted.center.y, fitted.radius, 0, 2 * Math.PI);
-  else {
-    pen.moveTo(fitted.points[0].x, fitted.points[0].y);
-    for (const p of fitted.points.slice(1)) pen.lineTo(p.x, p.y);
-    if (fitted.type === "rectangle") pen.closePath();
-  }
-  pen.stroke();
-  const label = { line: "Düz xətt", circle: "Dairə", rectangle: "Düzbucaqlı" }[
-    fitted.type
-  ];
-  $("#gesture-fit").textContent =
-    `${label} düzəldildi · nisbi uyğunlaşdırma xətası ${(fitted.error * 100).toFixed(1)}%. Bu, tanıma ehtimalı deyil.`;
+  if (!vectors.add(current))
+    $("#gesture-fit").textContent =
+      "200 xətt həddi. PNG-ni saxla, sonra lövhəni təmizlə.";
+  rebuildInk();
   render();
 }
-function stroke(point, erase = false) {
+function stroke(point, erase = $("#air-tool").value === "erase") {
   const nextAction = erase ? "erase" : "draw";
-  if (!previous || action !== nextAction) {
+  if (!pendingStroke || action !== nextAction) {
     resetAction();
-    snapshot();
-    previous = point;
     action = nextAction;
-    if (!erase)
-      pendingStroke = {
-        points: [{ ...point }],
-        tool: $("#gesture-snap").value,
-        color: $("#gesture-color").value,
-        width: Number($("#gesture-width").value),
-        end: { ...point },
-      };
+    pendingStroke = {
+      points: [],
+      tool:
+        $("#air-preset").value === "beautify"
+          ? $("#gesture-snap").value
+          : "free",
+      color: $("#gesture-color").value,
+      width: Number($("#gesture-width").value) * (erase ? 6 : 1),
+      erase,
+      smooth: $("#air-preset").value !== "raw",
+    };
   }
-  if (
-    pendingStroke &&
-    pendingStroke.points.length < 4096 &&
-    Math.hypot(
-      point.x - pendingStroke.points.at(-1).x,
-      point.y - pendingStroke.points.at(-1).y,
-    ) > 1
-  )
-    pendingStroke.points.push({ ...point });
-  pen.globalCompositeOperation = erase ? "destination-out" : "source-over";
-  pen.strokeStyle = $("#gesture-color").value;
-  pen.lineWidth = erase
-    ? Number($("#gesture-width").value) * 6
-    : Number($("#gesture-width").value);
-  pen.lineCap = "round";
-  pen.lineJoin = "round";
-  pen.beginPath();
-  const midpoint = {
-    x: (previous.x + point.x) / 2,
-    y: (previous.y + point.y) / 2,
-  };
-  const end = pendingStroke?.end || previous;
-  pen.moveTo(end.x, end.y);
-  pen.quadraticCurveTo(previous.x, previous.y, midpoint.x + 0.01, midpoint.y);
-  if (pendingStroke) pendingStroke.end = midpoint;
-  pen.stroke();
-  pen.globalCompositeOperation = "source-over";
+  const last = pendingStroke.points.at(-1);
+  if (!last || Math.hypot(point.x - last.x, point.y - last.y) >= 0.8)
+    pendingStroke.points.push({ x: point.x, y: point.y });
   previous = point;
+  rebuildInk();
   render();
+  if (pendingStroke.points.length >= 4096) resetAction();
 }
 function rotate(point) {
   if (previous && action === "rotate") {
@@ -233,7 +240,13 @@ function showCursor(point) {
 }
 function drawMarks(points) {
   marks.clearRect(0, 0, 480, 360);
-  if (!points) return;
+  if (mode() === "draw") {
+    marks.save();
+    marks.scale(480 / 960, 360 / 600);
+    marks.drawImage(ink, 0, 0);
+    marks.restore();
+  }
+  if (!points || !$("#air-landmarks").checked) return;
   const chains = [
     [0, 1, 2, 3, 4],
     [0, 5, 6, 7, 8],
@@ -260,7 +273,22 @@ function drawMarks(points) {
 }
 function processHand(points) {
   drawMarks(points);
-  const gesture = classifyHand(points, pinched),
+  if (mode() === "letters") {
+    resetAction();
+    showCursor(null);
+    const count = fingerCount(points),
+      letter = letterGate.update(count, performance.now());
+    $("#gesture-name").textContent =
+      `${count} barmaq · ${["—", "P", "O", "L", "A", "D"][count] || "—"}`;
+    if (letter)
+      $("#finger-text").value = ($("#finger-text").value + letter).slice(0, 80);
+    return;
+  }
+  const gesture = classifyHand(
+      points,
+      pinched,
+      Number($("#air-sensitivity").value),
+    ),
     wasPinched = pinched;
   pinched = gesture.pinch;
   $("#gesture-name").textContent = names[gesture.name];
@@ -281,15 +309,18 @@ function processHand(points) {
   const filtered = pointerFilter.update(
     raw,
     performance.now(),
-    Number($("#gesture-smoothing").value),
+    $("#air-preset").value === "raw"
+      ? 0
+      : Number($("#gesture-smoothing").value),
   );
   if (filtered.breakStroke) resetAction();
   smooth = filtered;
   showCursor(smooth);
   if (gesture.name === "fist") {
     fistAt ??= performance.now();
-    if (!fistUsed && performance.now() - fistAt >= 1000 && mode() !== "shape") {
-      undo();
+    if (!fistUsed && performance.now() - fistAt >= 450 && mode() !== "shape") {
+      resetAction();
+      $("#air-tool").value = "erase";
       fistUsed = true;
     }
   } else {
@@ -318,7 +349,7 @@ function processHand(points) {
     else stroke(smooth);
   } else if (gesture.name === "two" && mode() === "draw") {
     drawPinchAt = null;
-    stroke(smooth, true);
+    resetAction();
   } else {
     drawPinchAt = null;
     resetAction();
@@ -329,6 +360,12 @@ function stop(
     ? "Kamera bağlıdır. Əşyanı yoxlamaq üçün kameranı aç."
     : "Kamera bağlıdır. Lövhə siçanla işləyir.",
 ) {
+  letterGate.reset();
+  dualHands.reset();
+  effectState = null;
+  effectsCtx.clearRect(0, 0, 960, 720);
+  tele?.dispose();
+  tele = null;
   epoch++;
   if (cancelInit) {
     const cancel = cancelInit;
@@ -343,6 +380,9 @@ function stop(
   camera = null;
   video.srcObject = null;
   loading = false;
+  measuredFrames = 0;
+  measuredSince = performance.now();
+  $("#air-fps").textContent = "Kamera bağlıdır";
   frameBusy = false;
   lastFrame = -1;
   frameTime = 0;
@@ -367,6 +407,8 @@ function stop(
   if (mode() === "objects") render();
 }
 const objectNames = {
+  pen: "Qələm",
+  notebook: "Dəftər",
   book: "Kitab (dəftərlə qarışa bilər)",
   "cell phone": "Telefon",
   laptop: "Noutbuk",
@@ -398,7 +440,10 @@ function processObjects(data) {
       y = (by * 600) / 360,
       w = bw * 2,
       h = (bh * 600) / 360;
-    const label = objectNames[item.class] || item.label;
+    const label =
+      $("#object-language").value === "en"
+        ? item.class
+        : objectNames[item.class] || item.label;
     const text = Number.isFinite(item.score)
       ? `${label} · model balı ${item.score.toFixed(2)}`
       : `${label} · uzanma ${item.aspect.toFixed(1)}`;
@@ -428,13 +473,19 @@ function processObjects(data) {
   }
   $("#gesture-detections").replaceChildren(...rows);
   status(
-    `Lokal əşya analizi · ${Math.round(data.elapsed)} ms · ${$("#gesture-detector").value === "ai" ? "neyron şəbəkə" : "yalnız siluet"}`,
+    `Lokal əşya analizi · ${Math.round(data.elapsed)} ms · ${$("#gesture-detector").value === "geometry" ? "yalnız siluet" : $("#gesture-detector").value === "yolo" ? "YOLO11" : "COCO-SSD"}`,
   );
   $("#gesture-name").textContent = "Əşya rejimi — jestlər söndürülüb";
 }
 async function tick(now) {
   if (!camera || !worker) return;
   animation = requestAnimationFrame(tick);
+  if (mode() === "effects")
+    paintEffects(effectsCtx, effectState, now, {
+      theme: $("#effect-theme").value,
+      color: $("#effect-color").value,
+      intensity: Number($("#effect-intensity").value),
+    });
   if (
     frameBusy ||
     video.readyState < 2 ||
@@ -462,7 +513,7 @@ async function tick(now) {
     backgroundNext = false;
     timer = setTimeout(
       () => stop("Analiz cavab vermədi. Kameranı yenidən aç."),
-      10000,
+      $("#gesture-detector").value === "yolo" ? 60000 : 10000,
     );
   } catch {
     if (token === epoch) stop("Kamera kadrı oxunmadı. Kameranı yenidən aç.");
@@ -525,6 +576,7 @@ $("#gesture-start").onclick = async () => {
       };
       worker.postMessage({
         type: "init",
+        dual: ["effects", "tele"].includes(mode()),
         method: $("#gesture-detector").value,
       });
     });
@@ -542,6 +594,7 @@ $("#gesture-start").onclick = async () => {
     video.srcObject = camera;
     await video.play();
     if (token !== epoch) return;
+    if (mode() === "tele") await ensureTele();
     loading = false;
     camera
       .getVideoTracks()[0]
@@ -557,8 +610,36 @@ $("#gesture-start").onclick = async () => {
         return;
       }
       if (data.type === "result") {
-        processHand(data.points);
-        status(`Lokal əl izləmə · ${Math.round(data.elapsed)} ms · 1 əl`);
+        if (["effects", "tele"].includes(mode())) {
+          drawMarks(null);
+          effectState = dualHands.update(
+            data.hands || [],
+            performance.now(),
+            Number($("#air-sensitivity").value),
+          );
+          if (mode() === "tele") tele?.input(effectState);
+          $("#gesture-name").textContent = effectState.hands.length
+            ? effectState.hands
+                .map(
+                  (h) =>
+                    `${h.side === "Left" ? "Sol" : "Sağ"}: ${names[h.gesture] || h.gesture}`,
+                )
+                .join(" · ")
+            : "Əl izləməsi itdi — effektlər dayandırılıb";
+          $("#effect-status").textContent =
+            `${effectState.hands.length} əl · ${effectState.combo === "open" ? "İki açıq əl — portal" : effectState.combo === "close" ? "Əllər yaxındır — enerji" : "Əl effektləri"}`;
+        } else processHand(data.points);
+        measuredFrames++;
+        const span = performance.now() - measuredSince;
+        if (span >= 1000) {
+          $("#air-fps").textContent =
+            `${((measuredFrames * 1000) / span).toFixed(1)} analiz/s`;
+          measuredFrames = 0;
+          measuredSince = performance.now();
+        }
+        status(
+          `Lokal əl izləmə · ${Math.round(data.elapsed)} ms · ${(data.hands || []).length} əl`,
+        );
       }
       if (data.type === "objects") processObjects(data);
     };
@@ -628,7 +709,11 @@ $("#gesture-smoke").onclick = () => {
           : "Əşya analizinin kamerasız sınağı keçdi. Real əşyalarla dəqiqlik ayrıca yoxlanmalıdır.",
       );
   };
-  worker.postMessage({ type: "init", method: $("#gesture-detector").value });
+  worker.postMessage({
+    type: "init",
+    dual: ["effects", "tele"].includes(mode()),
+    method: $("#gesture-detector").value,
+  });
 };
 $("#gesture-stop").onclick = () => stop();
 for (const event of ["pagehide", "facegate-lock", "facegate-face-camera"])
@@ -676,26 +761,60 @@ for (const event of ["pointerup", "pointercancel", "lostpointercapture"])
     resetAction();
   });
 $("#gesture-undo").onclick = undo;
+$("#gesture-redo").onclick = redo;
 $("#gesture-clear").onclick = () => {
+  if (
+    !confirm("Bütün rəsmi təmizləmək istəyirsən? Geri al ilə bərpa etmək olar.")
+  )
+    return;
   resetAction();
-  snapshot();
-  pen.clearRect(0, 0, 960, 600);
-  $("#gesture-fit").textContent = "Lövhə təmizləndi. Yeni xətt çəkə bilərsən.";
-  resetAction();
+  vectors.clear();
+  rebuildInk();
   render();
 };
+for (const id of [
+  "air-tool",
+  "air-preset",
+  "gesture-color",
+  "gesture-width",
+  "gesture-snap",
+  "gesture-smoothing",
+])
+  $("#" + id).addEventListener("change", () => {
+    resetAction();
+    pointerFilter.reset();
+  });
 $("#gesture-mode").onchange = () => {
+  dualHands.reset();
+  effectState = null;
+  effectsCtx.clearRect(0, 0, 960, 720);
+  $("#effects-panel").hidden = mode() !== "effects";
+  letterGate.reset();
+  $("#finger-panel").hidden = mode() !== "letters";
   resetAction();
-  if (mode() === "objects" || lastMode === "objects") stop();
+  if (
+    ["objects", "effects", "tele"].includes(mode()) ||
+    ["objects", "effects", "tele"].includes(lastMode)
+  )
+    stop();
   lastMode = mode();
+  $("#tele-panel").hidden = mode() !== "tele";
+  if (mode() === "tele") ensureTele();
   $("#gesture-drawing-tools").hidden = mode() !== "draw";
   $("#gesture-fit").hidden = mode() !== "draw";
   $("#gesture-object-tools").hidden = mode() !== "objects";
-  $("#gesture-guide-panel").hidden = mode() === "objects";
+  $("#gesture-guide-panel").hidden = ["objects", "effects", "tele"].includes(
+    mode(),
+  );
   $("#gesture-background").hidden = $("#gesture-detector").value !== "geometry";
   $("#gesture-start").textContent =
     mode() === "objects" ? "Əşya kamerasını aç" : "Əl kamerasını aç";
-  for (const id of ["gesture-save", "gesture-clear", "gesture-undo"])
+  for (const id of [
+    "gesture-save",
+    "gesture-clear",
+    "gesture-undo",
+    "gesture-redo",
+  ])
     $(`#${id}`).hidden = mode() === "objects";
   $("#gesture-math").hidden = mode() !== "math";
   $("#gesture-shape").hidden = mode() !== "shape";
@@ -785,3 +904,48 @@ for (const key of [
   $("#gesture-keypad").append(button);
 }
 render();
+
+const mainPreview = document.createElement("div");
+mainPreview.className = "air-main-preview";
+mainPreview.append($(".gesture-camera"));
+const cameraLabel = document.createElement("p");
+cameraLabel.textContent = "Canlı kamera · pinch ilə yaz, buraxanda xətti bitir";
+mainPreview.prepend(cameraLabel);
+$(".gesture-workspace").insertBefore(mainPreview, $("#gesture-drawing-tools"));
+rebuildInk();
+
+$("#finger-back").onclick = () => {
+  $("#finger-text").value = $("#finger-text").value.slice(0, -1);
+};
+$("#finger-clear").onclick = () => {
+  $("#finger-text").value = "";
+  letterGate.reset();
+};
+$("#finger-copy").onclick = async () => {
+  try {
+    await navigator.clipboard.writeText($("#finger-text").value);
+    status("Mətn kopyalandı.");
+  } catch {
+    status("Mətni seçib Ctrl+C ilə kopyala.");
+  }
+};
+
+$(".gesture-workspace").insertBefore($("#finger-panel"), mainPreview);
+
+$(".gesture-workspace").insertBefore($("#effects-panel"), mainPreview);
+
+$("#effect-theme").onchange = () => {
+  $("#effect-color").value = {
+    fire: "#ff702b",
+    electric: "#68d9ff",
+    neon: "#00bfff",
+    magic: "#bd83ff",
+    splash: "#22e890",
+  }[$("#effect-theme").value];
+};
+
+$(".gesture-workspace").insertBefore($("#tele-panel"), mainPreview);
+$("#tele-reset").onclick = async () => {
+  await ensureTele();
+  tele?.reset();
+};

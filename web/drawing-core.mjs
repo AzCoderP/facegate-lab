@@ -13,6 +13,7 @@ export class PointerFilter {
     this.reset();
   }
   update(raw, now, strength = 1) {
+    if (this.time !== null && now - this.time > 250) this.reset();
     if (!this.point) {
       this.point = { ...raw };
       this.time = now;
@@ -31,6 +32,10 @@ export class PointerFilter {
     this.jumps = 0;
     this.speed = 0.7 * this.speed + (0.3 * gap) / dt;
     if (gap < 1.2 * strength) return { ...this.point, breakStroke: false };
+    if (strength === 0) {
+      this.point = { ...raw };
+      return { ...raw, breakStroke: false };
+    }
     const cutoff = 1.8 / strength + (0.018 * this.speed) / strength;
     const alpha = 1 - Math.exp(-2 * Math.PI * cutoff * dt);
     this.point = {

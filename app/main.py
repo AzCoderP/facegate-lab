@@ -16,10 +16,13 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.objects import ObjectEngine
 from app.rules import access_reason
 from app.security import AdminAuth, ConfigurationError, RateLimiter, VaultError
 from app.storage import Store, utc_now
+from app.tracking import PresenceSessions
 from app.vision import FaceEngine, VisionError
+from app.watch import register_watch
 
 ROOT = Path(__file__).resolve().parent.parent
 Identifier = Annotated[str, Field(pattern=r"^[A-Za-z0-9_-]{1,40}$")]
@@ -65,6 +68,25 @@ class Attempt(StrictModel):
     user_id: Identifier
     door: Identifier = "Main-Gate"
     image: Image
+
+
+class SelfCheck(StrictModel):
+    user_id: Identifier
+    image: Image
+    consent: Literal[True]
+
+
+class ObjectFrame(StrictModel):
+    image: Image
+
+
+class PresenceFrame(StrictModel):
+    image: Image
+    tracking_session: Identifier
+
+
+class PresenceStop(StrictModel):
+    tracking_session: Identifier
 
 
 class Preview(StrictModel):
@@ -115,6 +137,10 @@ def create_app(db_path=None, engine=None, admin_key=None):
     operation_lock = threading.Lock()
     slots = threading.BoundedSemaphore(3)
     writes, logins = RateLimiter(40), RateLimiter(5)
+    presence_frames = RateLimiter(600)
+    presence_sessions = PresenceSessions()
+    object_engine = ObjectEngine(ROOT)
+    register_watch(app, store, auth, object_engine, slots)
     app.state.store, app.state.auth = store, auth
     app.state.writes, app.state.logins = writes, logins
 
@@ -152,7 +178,12 @@ def create_app(db_path=None, engine=None, admin_key=None):
                 csrf = request.headers.get("x-csrf-token", "")
                 if not secrets.compare_digest(csrf, session["csrf"]):
                     return reject(403, "CSRF_INVALID")
-                if not writes.allow(auth._digest(request.cookies[auth.COOKIE])):
+                limiter = (
+                    presence_frames
+                    if path in ("/api/presence", "/api/objects", "/api/watch/frame")
+                    else writes
+                )
+                if not limiter.allow(auth._digest(request.cookies[auth.COOKIE])):
                     return reject(429, "RATE_LIMITED")
         if path == "/api/auth/login" and write and not logins.allow("local-admin"):
             return reject(429, "RATE_LIMITED")
@@ -163,7 +194,18 @@ def create_app(db_path=None, engine=None, admin_key=None):
         body = bytearray()
         # Smaller limits for login and settings; cap actual streamed bytes, not just a header.
         maximum = (
-            6_100_000 if path == "/api/users" else 2_100_000 if path == "/api/verify" else 4096
+            6_100_000
+            if path == "/api/users"
+            else 2_100_000
+            if path
+            in (
+                "/api/verify",
+                "/api/presence",
+                "/api/objects",
+                "/api/self-check",
+                "/api/watch/frame",
+            )
+            else 4096
         )
         async for chunk in request.stream():
             body.extend(chunk)
@@ -366,6 +408,65 @@ def create_app(db_path=None, engine=None, admin_key=None):
                 return {k: v for k, v in event.items() if k != "fingerprint"} | {"replayed": False}
         finally:
             slots.release()
+
+    @app.post("/api/self-check")
+    def self_check(payload: SelfCheck):
+        if not slots.acquire(blocking=False):
+            raise HTTPException(503, "SYSTEM_BUSY")
+        try:
+            with operation_lock:
+                user = store.user(payload.user_id)
+                if not user:
+                    raise HTTPException(404, "USER_NOT_FOUND")
+                if not user["active"]:
+                    raise HTTPException(403, "USER_DISABLED")
+                try:
+                    feature = engine.embedding(payload.image)
+                    score = engine.similarity(feature, user["templates"])
+                except VisionError as exc:
+                    return {"verified": False, "reason": exc.code}
+                verified = math.isfinite(score) and score >= store.threshold(default_threshold)
+                return {
+                    "verified": verified,
+                    "name": user["name"] if verified else None,
+                    "reason": "MATCH" if verified else "FACE_MISMATCH",
+                }
+        finally:
+            slots.release()
+
+    @app.post("/api/objects")
+    def objects(payload: ObjectFrame):
+        if not slots.acquire(blocking=False):
+            raise HTTPException(503, "SYSTEM_BUSY")
+        try:
+            return {"objects": object_engine.detect(payload.image)}
+        finally:
+            slots.release()
+
+    @app.post("/api/presence")
+    def presence(payload: PresenceFrame, request: Request):
+        if not slots.acquire(blocking=False):
+            raise HTTPException(503, "SYSTEM_BUSY")
+        try:
+            started = time.perf_counter()
+            boxes = engine.presence(payload.image)
+            at = utc_now()
+            result = presence_sessions.update(
+                auth._digest(request.cookies[auth.COOKIE]), payload.tracking_session, boxes, at
+            )
+            return result | {
+                "at": at,
+                "elapsed_ms": round((time.perf_counter() - started) * 1000, 1),
+            }
+        finally:
+            slots.release()
+
+    @app.post("/api/presence/stop")
+    def presence_stop(payload: PresenceStop, request: Request):
+        presence_sessions.clear(
+            auth._digest(request.cookies[auth.COOKIE]), payload.tracking_session
+        )
+        return {"stopped": True}
 
     @app.post("/api/policy-preview")
     def preview(payload: Preview):

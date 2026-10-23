@@ -14,7 +14,7 @@ self.onmessage = async ({ data }) => {
             delegate: "CPU",
           },
           runningMode: "VIDEO",
-          numHands: 1,
+          numHands: data.dual ? 2 : 1,
           minHandDetectionConfidence: 0.6,
           minHandPresenceConfidence: 0.6,
           minTrackingConfidence: 0.6,
@@ -28,6 +28,11 @@ self.onmessage = async ({ data }) => {
         self.postMessage({
           type: "result",
           points: result.landmarks[0] || null,
+          hands: result.landmarks.map((points, i) => ({
+            points,
+            side: result.handedness[i]?.[0]?.categoryName || "Unknown",
+            score: result.handedness[i]?.[0]?.score || 0,
+          })),
           elapsed: performance.now() - start,
         });
       } finally {

@@ -8,7 +8,11 @@
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/static/style.css" />
     <script src="/static/app.js" defer></script>
+    <script type="module" src="/static/watch.js"></script>
+    <script type="module" src="/static/presence.js"></script>
+    <link rel="stylesheet" href="/static/presence.css" />
     <script type="module" src="/static/gestures.js"></script>
+    <link rel="stylesheet" href="/static/airboard.css" />
   </head>
   <body>
     <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -81,6 +85,10 @@
             <svg><use href="#i-logs" /></svg>Giriş qeydləri</button
           ><button class="nav-item" data-view="gestures">
             <svg><use href="#i-face" /></svg>Jest laboratoriyası</button
+          ><button class="nav-item" data-view="presence">
+            <svg><use href="#i-camera" /></svg>Canlı müşahidə</button
+          ><button class="nav-item" data-view="watch">
+            Obyekt keçidi / Telegram</button
           ><button class="nav-item" data-view="settings">
             <svg><use href="#i-settings" /></svg>Parametrlər
           </button>
@@ -493,10 +501,178 @@
               </aside>
             </div>
           </section>
+          <section id="view-watch" class="view" hidden>
+            <h1>Canlı insan / obyekt izləmə → Telegram</h1>
+            <p>
+              İnsan rejimində yeni insan görünəndə və görüntüdən çıxanda görünən
+              insan sayı, ilk və son görünmə vaxtı Telegram-a göndərilir. Eyni
+              insan üçün ilk bildiriş dərhal, sonrakı şəkil ən tez 60 saniyə
+              sonra göndərilir; başqa insan görünəndə ayrıca bildiriş gəlir.
+              Çıxış mesajı şəkilsizdir. Şəkil göndərişi aktivdirsə, bildiriş
+              anındakı tam kamera görüntüsü də göndərilir. Şəkillər serverdə
+              diskə yazılmır; Telegram-da qalır. İnsanlara müvəqqəti anonim
+              nömrə verilir.
+            </p>
+            <div class="presence-actions">
+              <button id="watch-start" type="button">Kameranı başlat</button
+              ><button id="watch-stop" type="button" disabled>Dayandır</button
+              ><button id="watch-line" type="button" disabled>
+                Keçid xəttini seç
+              </button>
+            </div>
+            <label
+              >İzləmə rejimi
+              <select id="watch-mode">
+                <option value="people">İnsan sayı və görünmə vaxtı</option>
+                <option value="crossing">Obyektin xətti keçməsi</option>
+              </select>
+            </label>
+            <p id="watch-status" role="status">
+              İnsan izləmə hazırdır. Kameranı başlat.
+            </p>
+            <div class="presence-stage">
+              <video id="watch-video" autoplay playsinline muted></video
+              ><canvas id="watch-overlay"></canvas>
+            </div>
+            <p>
+              İnsan iki ardıcıl analizdə görünəndə təsdiqlənir; 3 saniyə
+              görünməyəndə son görünmə vaxtı ilə çıxış bildirişi yaranır. Bu,
+              kamera görüntüsündə görünmədir; fiziki giriş/çıxış təsdiqi deyil.
+              Obyekt rejimində xətt seçimi: iki son nöqtəyə kliklə. Bir tərəfdən
+              digərinə təsdiqlənmiş keçid hadisə yaradır. Xəttin üzərində
+              titrəmə süzülür; eyni izləmə üçün 5 saniyə bildiriş fasiləsi var.
+              Qələm/dəftər standart modeldə ayrıca sinif deyil.
+            </p>
+            <section class="panel padded">
+              <h2>Telegram ayarları</h2>
+              <p>
+                BotFather-də /newbot ilə bot yarat, sonra öz botunda /start yaz.
+                Tokeni yalnız aşağıdakı lokal formaya daxil et.
+              </p>
+              <label
+                >Bot tokeni<input
+                  id="watch-token"
+                  type="password"
+                  autocomplete="off"
+                  placeholder="Dəyişdirmək istəmirsənsə boş saxla" /></label
+              ><label>Chat ID<input id="watch-chat" maxlength="25" /></label
+              ><label
+                ><input id="watch-enabled" type="checkbox" /> Bu chata izləmə
+                bildirişlərini göndər</label
+              >
+              <label
+                ><input id="watch-photos" type="checkbox" checked /> Bildirişlə
+                birlikdə kamera şəklini Telegram-a göndər</label
+              >
+              <div class="presence-actions">
+                <button id="watch-save" type="button">Ayarları saxla</button
+                ><button id="watch-chats" type="button">Chat ID-ləri tap</button
+                ><button id="watch-test" type="button">
+                  Test mesajı göndər
+                </button>
+              </div>
+              <p id="watch-bot-status" role="status">
+                Token və Chat ID hələ yoxlanmayıb.
+              </p>
+              <ul id="watch-chat-list"></ul>
+            </section>
+            <h2>Hadisələr və göndərilmə vəziyyəti</h2>
+            <ul id="watch-events"></ul>
+          </section>
+          <section id="view-presence" class="view" hidden>
+            <h1>Canlı müşahidə</h1>
+            <button type="button" data-view="watch">
+              İnsan sayı və vaxtını Telegram-a bildir
+            </button>
+            <p>
+              Üzlər yaşıl çərçivə ilə göstərilir. Qeydlər anonimdir; ilk və son
+              görünmə Bakı vaxtı ilə qeyd olunur.
+            </p>
+            <section class="panel padded">
+              <h2>Öz profilimlə 1:1 yoxlama</h2>
+              <p>
+                Bu seçimdə öz ID-ni bildirirsən və yalnız həmin profil yoxlanır.
+                Kadrda tək üz olmalıdır. Nəticə giriş icazəsi vermir və anonim
+                qeydlərə ad yazılmır.
+              </p>
+              <label
+                >Öz profil ID-m<input
+                  id="self-id"
+                  value="RAHIL01"
+                  maxlength="40" /></label
+              ><label
+                ><input id="self-consent" type="checkbox" /> Öz üzümün seçdiyim
+                profilə qarşı yoxlanmasını istəyirəm.</label
+              ><button id="self-enroll" type="button">
+                Rahil qeydiyyatını hazırla</button
+              ><button id="self-check" type="button">Öz üzümü yoxla</button>
+              <label
+                ><input id="self-auto" type="checkbox" /> Seçdiyim öz profilimi
+                avtomatik yoxla və adımı kamera üzərində göstər</label
+              >
+              <p>
+                Avtomatik ad üçün bu seçimi və razılığı işarələ. Kadrda yalnız
+                sən olmalısan. Uyğunluq təsdiqlənməsə ad göstərilmir.
+              </p>
+              <p id="self-result" role="status">
+                Əvvəl profil yarat, sonra kameranı başlat.
+              </p>
+            </section>
+            <div class="presence-actions">
+              <button id="presence-start" type="button">Kameranı başlat</button
+              ><button id="presence-stop" type="button" disabled>
+                Dayandır</button
+              ><button id="presence-export" type="button">CSV endir</button>
+            </div>
+            <div class="presence-summary">
+              <strong id="presence-count">0</strong> görünən üz
+              <span id="presence-speed">Analiz gözlənilir</span>
+            </div>
+            <div
+              id="presence-notification"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              Yeni üz görünəndə burada bildiriş göstəriləcək.
+            </div>
+            <p id="presence-status">
+              Başlat düyməsini seç və kamera icazəsi ver.
+            </p>
+            <div class="presence-stage">
+              <video id="presence-video" autoplay muted playsinline></video
+              ><canvas id="presence-overlay"></canvas>
+            </div>
+            <p>
+              Person # nömrələri yalnız bu kamera sessiyası üçün müvəqqətidir.
+              Qısa aşkarlama fasilələri 1,5 saniyəyə qədər izlənir. Kadrdan
+              çıxıb qayıdan şəxs yeni nömrə ala bilər. Qapıdan giriş-çıxış və
+              unikal insan sayı ölçülmür. Kamera kadrları saxlanmır. Son 500
+              qeyd cari kamera sessiyasında qalır. Yenidən başlatma qeydləri
+              təmizləyir; saxlamaq üçün CSV endir.
+            </p>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Anonim nömrə</th>
+                    <th>İlk görünmə</th>
+                    <th>Son görünmə</th>
+                    <th>Vəziyyət</th>
+                  </tr>
+                </thead>
+                <tbody id="presence-records">
+                  <tr>
+                    <td colspan="4">Hələ müşahidə yoxdur.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
           <section id="view-gestures" class="view" hidden>
             <div class="view-heading">
               <div>
-                <h1>Əlinlə yarat</h1>
+                <h1>Jest laboratoriyası</h1>
                 <p>Havada rəsm çək, hesabla və 3D fiquru idarə et.</p>
               </div>
             </div>
@@ -506,6 +682,9 @@
                   <label
                     >İş rejimi<select id="gesture-mode">
                       <option value="draw">Rəsm lövhəsi</option>
+                      <option value="tele">Telekinesis AI — enerji topu</option>
+                      <option value="effects">İki əl — AR effektləri</option>
+                      <option value="letters">Barmaqla ad yaz</option>
                       <option value="math">Riyaziyyat</option>
                       <option value="shape">3D fiqurlar</option>
                       <option value="objects">Real əşya analizi</option>
@@ -522,6 +701,34 @@
                       max="24"
                       value="5"
                   /></label>
+                </div>
+                <div class="gesture-toolbar air-presets">
+                  <label
+                    >Rəsm rejimi<select id="air-preset">
+                      <option value="raw">Raw Drawing</option>
+                      <option value="smooth" selected>Smooth Drawing</option>
+                      <option value="beautify">Auto Beautify</option>
+                    </select></label
+                  >
+                  <label
+                    >Alət<select id="air-tool">
+                      <option value="draw">Qələm</option>
+                      <option value="erase">Silgi</option>
+                    </select></label
+                  >
+                  <label
+                    >Pinch həssaslığı<input
+                      id="air-sensitivity"
+                      type="range"
+                      min="0.7"
+                      max="1.3"
+                      step="0.05"
+                      value="1"
+                  /></label>
+                  <label
+                    ><input id="air-landmarks" type="checkbox" checked /> Əl
+                    nöqtələri</label
+                  ><output id="air-fps">Kamera bağlıdır</output>
                 </div>
                 <div id="gesture-drawing-tools" class="gesture-toolbar">
                   <label
@@ -548,6 +755,7 @@
                 <div id="gesture-object-tools" hidden>
                   <label
                     >Analiz üsulu<select id="gesture-detector">
+                      <option value="yolo">YOLO11 — lokal server</option>
                       <option value="ai">Neyron şəbəkə — COCO-SSD</option>
                       <option value="geometry">
                         Modelsiz — fon fərqi və forma
@@ -567,6 +775,16 @@
                     göstər. Yalnız siluet forması ölçülür; kitab/qələm adı
                     təsdiqlənmir. Kamera tərpənsə fonu yenilə.
                   </p>
+                  <label
+                    >Dil<select id="object-language">
+                      <option value="az">AZ</option>
+                      <option value="en">EN</option>
+                    </select></label
+                  >
+                  <p>
+                    YOLO standart modelində qələm və dəftər ayrıca sinif deyil.
+                    Bu iki sinif üçün xüsusi öyrədilmiş model lazımdır.
+                  </p>
                   <ul id="gesture-detections" aria-live="polite">
                     <li>Kamera açıldıqdan sonra nəticə görünəcək.</li>
                   </ul>
@@ -583,10 +801,86 @@
                 </div>
                 <div class="gesture-toolbar">
                   <button id="gesture-undo" type="button">Geri al</button
+                  ><button id="gesture-redo" type="button">Yenidən et</button
                   ><button id="gesture-clear" type="button">
                     Lövhəni təmizlə</button
                   ><button id="gesture-save" type="button">PNG endir</button>
                 </div>
+                <section id="tele-panel" class="panel padded" hidden>
+                  <h2>Telekinesis AI</h2>
+                  <p>
+                    Topa yaxın pinch et və tut. İki əllə pinch saxla: məsafə
+                    ölçünü, əllərin bucağı fırlanmanı dəyişir. Əlini açanda top
+                    virtual divara atılır və rəngli hissəciklərə parçalanır. Əl
+                    itəndə atış edilmir.
+                  </p>
+                  <button id="tele-reset" type="button">
+                    Topu yenidən yarat / 3D başlat
+                  </button>
+                  <p id="tele-status" role="status">3D hazırlanır…</p>
+                  <p>
+                    Siçan sınağı: topu tut, sürüşdür və burax. Kamera üçün Əl
+                    kamerasını aç seç. Mavi tor virtual divardır; real divar
+                    kalibrasiyası və dərinlik ölçməsi yoxdur.
+                  </p>
+                </section>
+                <section id="effects-panel" class="panel padded" hidden>
+                  <h2>İki əl — AR effektləri</h2>
+                  <div class="gesture-toolbar">
+                    <label
+                      >Effekt<select id="effect-theme">
+                        <option value="fire">Fire — alov</option>
+                        <option value="electric">Electric — elektrik</option>
+                        <option value="neon">Neon glow</option>
+                        <option value="magic">Magic energy</option>
+                        <option value="splash">Color splash</option>
+                      </select></label
+                    ><label
+                      >Rəng<input
+                        id="effect-color"
+                        type="color"
+                        value="#00bfff" /></label
+                    ><label
+                      >İntensivlik<input
+                        id="effect-intensity"
+                        type="range"
+                        min="0.4"
+                        max="1.8"
+                        step="0.1"
+                        value="1"
+                    /></label>
+                  </div>
+                  <p id="effect-status" role="status">
+                    Əl kamerasını aç və iki əlini göstər.
+                  </p>
+                  <p>
+                    Yumruq / açıq ovuc: aura · pinch: enerji kürəsi · bir/iki
+                    barmaq: şüa · iki açıq əl: portal · yaxın iki əl: enerji
+                    halqası. Jestləri qısa müddət sabit saxla. Sol/sağ etiketi
+                    modelin təxminidir.
+                  </p>
+                  <p>
+                    Canlı kamera üzərində vizual örtükdür. Divara kilidləmə və
+                    fiziki proyeksiya bu mərhələyə daxil deyil.
+                  </p>
+                </section>
+                <section id="finger-panel" class="panel padded" hidden>
+                  <h2>Barmaqla ad yaz</h2>
+                  <p>
+                    1 → P · 2 → O · 3 → L · 4 → A · 5 → D. Jesti 0,7 saniyə
+                    sabit saxla. Hər hərfdən sonra yumruq göstər və ya əlini 0,3
+                    saniyə kadrdan çıxar. POLAD üçün 1, 2, 3, 4, 5 ardıcıllığını
+                    göstər.
+                  </p>
+                  <input
+                    id="finger-text"
+                    maxlength="80"
+                    aria-label="Yazılmış ad"
+                    placeholder="POLAD"
+                  /><button id="finger-back" type="button">Son hərfi sil</button
+                  ><button id="finger-clear" type="button">Mətni sıfırla</button
+                  ><button id="finger-copy" type="button">Kopyala</button>
+                </section>
                 <div id="gesture-math" hidden>
                   <form id="gesture-math-form" class="gesture-toolbar">
                     <label
@@ -661,7 +955,8 @@
                   <p class="muted">
                     Kameranı əlinə və ya əşyaya yönəlt. Üz göstərmək lazım
                     deyil. Görüntü bu brauzerdə emal olunur; bu bölmə kadrları
-                    bazaya yazmır və serverə göndərmir.
+                    bazaya yazmır. YOLO seçildikdə kadrlar yalnız lokal serverdə
+                    emal edilir.
                   </p>
                 </section>
                 <section class="panel padded" id="gesture-guide-panel">
@@ -675,13 +970,13 @@
                       döndərir.
                     </dd>
                     <dt>İki barmaq</dt>
-                    <dd>Rəsm rejimində silgi.</dd>
+                    <dd>Naviqasiya: qələmi qaldırır, rəsm çəkmir.</dd>
                     <dt>Açıq ovuc</dt>
                     <dd>Qələmi qaldırır, əməliyyatı dayandırır.</dd>
                     <dt>Yumruq</dt>
                     <dd>
-                      Bir saniyə saxla: son xətti geri al. Yenidən etmək üçün
-                      əlini aç.
+                      Yarım saniyə saxla: silgi alətini seç. Pinch ilə sil;
+                      Qələm seçimi ilə rəsmə qayıt.
                     </dd>
                   </dl>
                   <p class="muted">

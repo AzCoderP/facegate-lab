@@ -169,7 +169,7 @@ function empty(target, cols, text) {
 }
 function view(name) {
   window.dispatchEvent(new CustomEvent("facegate-view", { detail: name }));
-  if (name === "gestures") stopCamera();
+  if (["gestures", "presence", "watch"].includes(name)) stopCamera();
   const selected = name === "camera" ? "dashboard" : name;
   document
     .querySelectorAll(".view")
@@ -387,7 +387,7 @@ async function run(task) {
   if (busy) return;
   busy = true;
   const controls = [...document.querySelectorAll("button:not(#camera-stop)")]
-    .filter((button) => !button.closest("#view-gestures"))
+    .filter((button) => !button.closest("#view-gestures, #view-presence"))
     .map((button) => [button, button.disabled]);
   controls.forEach(([button]) => (button.disabled = true));
   try {

@@ -1,0 +1,47 @@
+#view-gestures .gesture-layout {
+  grid-template-columns: minmax(0, 2.2fr) minmax(270px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.air-main-preview {
+  margin: 12px 0 20px;
+  padding: 12px;
+  border: 1px solid #17517a;
+  border-radius: 14px;
+  background: #071c30;
+}
+.air-main-preview > p {
+  margin: 0 0 10px;
+  color: #9bc9eb;
+}
+.air-main-preview .gesture-camera {
+  width: 100%;
+  max-width: none;
+  aspect-ratio: 4/3;
+}
+.air-presets {
+  padding: 12px;
+  border: 1px solid #194a6c;
+  border-radius: 12px;
+  background: #082038;
+}
+#air-fps {
+  color: #3ce0b5;
+  font-variant-numeric: tabular-nums;
+}
+#view-gestures .gesture-board-wrap {
+  border-color: #1377ac;
+}
+#view-gestures .gesture-workspace {
+  min-width: 0;
+}
+@media (max-width: 950px) {
+  #view-gestures .gesture-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+#tele-canvas {
+  touch-action: none;
+  z-index: 3;
+}

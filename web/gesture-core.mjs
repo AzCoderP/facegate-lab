@@ -1,5 +1,5 @@
 // Pure, browser-independent gesture and arithmetic logic.
-export function classifyHand(points, wasPinched = false) {
+export function classifyHand(points, wasPinched = false, sensitivity = 1) {
   if (
     !Array.isArray(points) ||
     points.length !== 21 ||
@@ -12,7 +12,9 @@ export function classifyHand(points, wasPinched = false) {
   const extended = [8, 12, 16, 20].map(
     (tip) => distance(tip, 0) > distance(tip - 2, 0) * 1.18,
   );
-  const pinch = distance(4, 8) / palm < (wasPinched ? 0.48 : 0.33);
+  const pinch =
+    distance(4, 8) / palm <
+    (wasPinched ? 0.48 : 0.33) * Math.max(0.7, Math.min(1.3, sensitivity));
   const count = extended.filter(Boolean).length;
   const name = pinch
     ? "pinch"

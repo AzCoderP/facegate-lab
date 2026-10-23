@@ -137,3 +137,15 @@ Yalnız etibarlı, bir administratorlu lokal laboratoriya. LAN-a və internetə 
 - [Cryptography / Fernet](https://cryptography.io/en/latest/fernet/)
 
 Orijinal layihə kodu MIT lisenziyası altındadır. Modellər və kitabxanalar öz lisenziyalarını saxlayır.
+
+## Anonim canlı müşahidə
+
+Menyudan **Canlı müşahidə → Kameranı başlat** seç. OpenCV YuNet bütün aşkarlanan üzləri yaşıl çərçivədə göstərir; Kalman hərəkət izləməsi müvəqqəti **Person #** nömrələri verir. Yeni izləmə üçün bir bildiriş, canlı üz sayı, ilk və son görünmə Bakı vaxtı ilə göstərilir. Analiz təxminən 6 dəfə/saniyə hədəfləyir, cihaz sürətinə uyğunlaşır. 1,5 saniyəlik qısa fasilələr eyni nömrə ilə davam edə bilər. Üzlər müqayisə edilmir, kadrlar və biometrik nümunələr saxlanmır. Son 500 metadata qeydi cari kamera sessiyasında qalır; yenidən başlatmadan əvvəl CSV endir. Fiziki giriş-çıxış və unikal insan sayı ölçülmür.
+
+[İcra, arxitektura, dəyişən fayllar və test addımları](docs/anonymous-tracking.md).
+
+## Telegram bildirişləri və AR əlavələri
+
+Canlı YOLO insan/obyekt izləməsi, müvəqqəti nömrələr, say və görünmə vaxtları, istəyə bağlı kamera şəkli ilə Telegram bildirişləri mövcuddur. İnsan rejimində təkrar şəkil fasiləsi 60 saniyədir; çıxış mesajı şəkilsizdir. [Quraşdırma, saxlama və test təlimatı](docs/telegram-watch.az.md).
+
+Jest laboratoriyası iki əlin izlənməsi, sabit jest keçidləri, əl/divar AR effektləri, barmaq sayı ilə POLAD yazılması və Three.js/cannon-es telekinez rejimini ehtiva edir. Bunlar kamera üzərində virtual effektlərdir. `web/vendor/` kitabxanalarının lisenziyaları həmin qovluqdadır.

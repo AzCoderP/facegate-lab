@@ -16,3 +16,12 @@ artifacts/
 node_modules/
 web/gesture-assets/
 web/object-assets/
+
+# Local object weights and training runs
+models/*.pt
+runs/
+
+# Local scratch files and encrypted configuration
+work/
+*.enc
+.env.*
