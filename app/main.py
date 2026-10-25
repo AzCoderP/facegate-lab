@@ -10,6 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Literal
 
+import requests
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
@@ -299,6 +300,30 @@ def create_app(db_path=None, engine=None, admin_key=None):
             "pad": False,
             "physical_door": False,
         }
+
+    @app.get("/api/shared-board")
+    def shared_board(
+        after: int = Query(-1, ge=-1, le=1_000_000_000), generation: str = Query("", max_length=80)
+    ):
+        # The browser keeps its existing FaceGate session. No phone or admin key in URLs.
+        if not slots.acquire(blocking=False):
+            raise HTTPException(503, "SYSTEM_BUSY")
+        try:
+            with requests.Session() as bridge:
+                bridge.trust_env = False
+                response = bridge.get(
+                    "http://127.0.0.1:8011/api/board/local",
+                    params={"after": after, "generation": generation},
+                    headers={"X-FaceGate-Board-Key": auth.key},
+                    timeout=0.8,
+                )
+                if response.status_code != 200:
+                    raise HTTPException(503, "BOARD_SERVICE_UNAVAILABLE")
+                return response.json()
+        except (requests.RequestException, ValueError):
+            raise HTTPException(503, "BOARD_SERVICE_UNAVAILABLE") from None
+        finally:
+            slots.release()
 
     @app.get("/api/stats")
     def stats():
