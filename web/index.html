@@ -11,6 +11,8 @@
     <script type="module" src="/static/watch.js"></script>
     <script type="module" src="/static/presence.js"></script>
     <link rel="stylesheet" href="/static/presence.css" />
+    <link rel="stylesheet" href="/static/shared-board.css" />
+    <script type="module" src="/static/shared-board-view.js"></script>
     <script type="module" src="/static/gestures.js"></script>
     <link rel="stylesheet" href="/static/airboard.css" />
   </head>
@@ -89,6 +91,7 @@
             <svg><use href="#i-camera" /></svg>Canlı müşahidə</button
           ><button class="nav-item" data-view="watch">
             Obyekt keçidi / Telegram</button
+          ><button class="nav-item" data-view="control">Telefon lövhəsi</button
           ><button class="nav-item" data-view="settings">
             <svg><use href="#i-settings" /></svg>Parametrlər
           </button>
@@ -500,6 +503,42 @@
                 </section>
               </aside>
             </div>
+          </section>
+          <section id="view-control" class="view" hidden>
+            <h1>Telefonun paylaşılan lövhəsi</h1>
+            <section class="panel padded shared-board-panel">
+              <h2>Telefonun əl yazısı</h2>
+              <p>
+                Telefonda yazı icazəsi təsdiqlənəndən sonra çəkdiyin xətlər
+                burada görünür.
+              </p>
+              <canvas
+                data-shared-board
+                class="shared-board"
+                aria-label="Telefondan gələn paylaşılan lövhə"
+              ></canvas>
+              <p data-board-status role="status">Lövhə xidməti gözlənilir.</p>
+            </section>
+            <section class="panel padded">
+              <h2>Qoşulma</h2>
+              <p>
+                Layihə qovluğunda <code>start-control.cmd</code> işə sal.
+                Kompüter panelində kod yarat, telefonda daxil et və kompüterdə
+                yazı icazəsini təsdiqlə.
+              </p>
+              <p>
+                <a
+                  href="http://127.0.0.1:8011/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >Lövhə panelini aç</a
+                >
+              </p>
+              <p>
+                Telefondan canlı kamera baxışı ləğv edilib. Kamera, mikrofon,
+                kompüter ekranı, siçan və klaviatura bu xidmətlə paylaşılmır.
+              </p>
+            </section>
           </section>
           <section id="view-watch" class="view" hidden>
             <h1>Canlı insan / obyekt izləmə → Telegram</h1>
