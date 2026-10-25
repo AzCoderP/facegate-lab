@@ -149,3 +149,11 @@ Menyudan **Canlı müşahidə → Kameranı başlat** seç. OpenCV YuNet bütün
 Canlı YOLO insan/obyekt izləməsi, müvəqqəti nömrələr, say və görünmə vaxtları, istəyə bağlı kamera şəkli ilə Telegram bildirişləri mövcuddur. İnsan rejimində təkrar şəkil fasiləsi 60 saniyədir; çıxış mesajı şəkilsizdir. [Quraşdırma, saxlama və test təlimatı](docs/telegram-watch.az.md).
 
 Jest laboratoriyası iki əlin izlənməsi, sabit jest keçidləri, əl/divar AR effektləri, barmaq sayı ilə POLAD yazılması və Three.js/cannon-es telekinez rejimini ehtiva edir. Bunlar kamera üzərində virtual effektlərdir. `web/vendor/` kitabxanalarının lisenziyaları həmin qovluqdadır.
+
+## Telefon inteqrasiyası — cari vəziyyət
+
+Telefondan canlı kamera baxışı Tailscale üzərindən özəl HTTPS, birdəfəlik kod və kompüterdə təsdiq ilə prototipləşdirildi. Şəbəkə gecikməsi zamanı müşahidə edilən donmalar üçün davamlı multipart JPEG axını, yalnız son kadrın saxlanması, yenidən qoşulma və köhnə kadrların gizlədilməsi sınaqdan keçirildi. Bu prototip layihənin əhatəsini sadələşdirmək üçün **cari versiyadan çıxarılıb**. Yerli OpenCV/YOLO analizi və istəyə bağlı Telegram hadisə şəkilləri ayrıca funksiyalar kimi qalır.
+
+Telefonun ayrıca **paylaşılan yazı/rəsm lövhəsi** kamera və kompüter idarəsi vermir. `start-control.cmd` ilə lövhə xidmətini başlat, `http://127.0.0.1:8011` panelindən telefonu qoşalaşdır və yazı icazəsini təsdiqlə. [Lövhənin quraşdırılması](docs/secure-control.az.md).
+
+[English overview](README.en.md) · [İşin texniki izahı — AZ](docs/engineering-notes.az.md) · [Engineering notes — EN](docs/engineering-notes.en.md)
