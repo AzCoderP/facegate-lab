@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="az">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>FaceGate | Telefon rəsm lövhəsi</title>
+    <link rel="stylesheet" href="/static/control.css" />
+    <link rel="stylesheet" href="/static/shared-board.css" />
+    <script type="module" src="/static/control-phone.js"></script>
+  </head>
+  <body>
+    <header>
+      <b>FaceGate <span>Telefon lövhəsi</span></b
+      ><small>Yazı və rəsm</small>
+    </header>
+    <main>
+      <h1>Barmağınla yaz və çək.</h1>
+      <p id="status" role="status">
+        Kompüterdə yaradılmış qoşalaşdırma kodunu daxil et.
+      </p>
+      <form id="pair">
+        <label
+          >Telefon adı<input
+            id="name"
+            value="Şəxsi telefonum"
+            maxlength="40"
+            required /></label
+        ><label
+          >8 rəqəmli kod<input
+            id="code"
+            inputmode="numeric"
+            pattern="[0-9]{8}"
+            maxlength="8"
+            autocomplete="off"
+            required /></label
+        ><button class="primary">Lövhəyə qoşul</button>
+      </form>
+      <section id="remote" hidden>
+        <p id="session-state">Kompüter təsdiqi gözlənilir.</p>
+        <section id="drawing-section" class="panel shared-board-panel" hidden>
+          <h2>Telefondan yaz və çək</h2>
+          <p>Eyni xətlər kompüterdə FaceGate lövhəsində görünür.</p>
+          <div class="board-tools">
+            <label
+              >Rəng
+              <input id="draw-color" type="color" value="#35b7ff" /></label
+            ><label
+              >Qalınlıq
+              <input
+                id="draw-width"
+                type="range"
+                min="1"
+                max="16"
+                value="4" /></label
+            ><button id="draw-undo" type="button">Geri al</button
+            ><button id="draw-clear" type="button">Lövhəni təmizlə</button>
+          </div>
+          <canvas
+            id="shared-board"
+            class="shared-board"
+            aria-label="Barmaqla yazı və rəsm lövhəsi"
+          ></canvas>
+          <p id="board-status" role="status">Yazı icazəsi gözlənilir.</p>
+        </section>
+        <p><button id="disconnect" class="danger">Sessiyanı bitir</button></p>
+        <p>
+          Kamera və mikrofon açılmır. Kompüter idarəsi yoxdur. Lövhə sessiya
+          bitəndə silinir.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="az">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>FaceGate | Paylaşılan lövhə</title>
+    <link rel="stylesheet" href="/static/control.css" />
+    <link rel="stylesheet" href="/static/shared-board.css" />
+    <script type="module" src="/static/control-admin.js"></script>
+  </head>
+  <body>
+    <header>
+      <b>FaceGate <span>Paylaşılan lövhə</span></b
+      ><small>Kompüterdə təsdiq</small>
+    </header>
+    <main>
+      <h1>Telefonda çək, FaceGate-də gör.</h1>
+      <p>
+        Telefon yalnız rəsm lövhəsinə yaza bilər. Telefona canlı kamera,
+        kompüter ekranı, siçan və klaviatura çıxışı verilmir.
+      </p>
+      <p id="status" role="status">
+        FaceGate administrator açarı ilə daxil ol.
+      </p>
+      <form id="login">
+        <label
+          >Administrator açarı<input
+            id="key"
+            type="password"
+            autocomplete="off"
+            required
+            minlength="24" /></label
+        ><button class="primary">Daxil ol</button>
+      </form>
+      <div id="console" hidden class="grid">
+        <section>
+          <section class="panel shared-board-panel">
+            <h2>Telefonun yazdığı lövhə</h2>
+            <canvas
+              id="shared-board"
+              class="shared-board"
+              aria-label="Telefondan gələn əl yazısı"
+            ></canvas>
+            <p id="board-status" role="status">
+              Telefonun yazı icazəsini təsdiqlə.
+            </p>
+          </section>
+          <div class="panel">
+            <h2>Hadisələr</h2>
+            <ul id="audit"></ul>
+          </div>
+        </section>
+        <aside class="panel">
+          <h2>Telefonun qoşulması</h2>
+          <p>Telefonda özəl HTTPS ünvanını aç və aşağıdakı kodu daxil et.</p>
+          <button id="invite" class="primary">2 dəqiqəlik kod yarat</button
+          ><output id="pair-code" aria-live="polite">—</output>
+          <p id="phone">Telefon gözlənilir.</p>
+          <button id="approve" class="primary" disabled>
+            Telefona yazı icazəsi ver
+          </button>
+          <p>
+            Kod birdəfəlikdir. Telefon adı kimlik sübutu deyil; kodu yalnız öz
+            telefonuna daxil et.
+          </p>
+          <button id="revoke" class="danger">
+            Sessiyanı və lövhəni sıfırla
+          </button>
+          <p class="note">
+            Sessiya ən çox 30 dəqiqədir. Telefon 30 saniyə əlaqəsiz qalanda
+            yenidən qoşulmaq lazımdır. Xətlər yalnız RAM-da saxlanır.
+          </p>
+        </aside>
+      </div>
+      <p class="note">
+        Bu lövhə FaceGate-in Telefon lövhəsi bölməsində də görünür. Uzaqdan
+        kamera baxışı prototipi cari versiyadan çıxarılıb.
+      </p>
+    </main>
+  </body>
+</html>

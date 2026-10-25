@@ -1,0 +1,39 @@
+.shared-board-panel {
+  margin-top: 22px;
+}
+.shared-board {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 5/3;
+  background: #061322;
+  border: 1px solid #29516e;
+  border-radius: 10px;
+  touch-action: none;
+  cursor: crosshair;
+}
+.shared-board.board-disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.board-tools {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 12px 0;
+}
+.board-tools label {
+  margin: 0;
+}
+.board-tools input[type="color"] {
+  width: 55px;
+  height: 40px;
+  padding: 4px;
+}
+.board-tools input[type="range"] {
+  max-width: 140px;
+}
+.board-tools button {
+  min-height: 42px;
+}
