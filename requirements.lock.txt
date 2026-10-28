@@ -18,7 +18,7 @@ typing_extensions==4.16.0
 typing-inspection==0.4.4
 uvicorn==0.54.0
 
-certifi==2026.10.19
+certifi==2026.10.23
 charset-normalizer==3.5.2
 requests==2.34.2
 urllib3==2.8.0
